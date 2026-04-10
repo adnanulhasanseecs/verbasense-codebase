@@ -1,0 +1,20 @@
+Metadata-Version: 2.4
+Name: verbasense-backend
+Version: 0.1.0
+Summary: VerbaSense CourtSense API — contract-first mock pipeline
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi==0.135.3
+Requires-Dist: uvicorn[standard]==0.43.0
+Requires-Dist: pydantic==2.12.5
+Requires-Dist: pydantic-settings==2.13.1
+Requires-Dist: python-multipart==0.0.22
+Requires-Dist: PyYAML==6.0.3
+Provides-Extra: dev
+Requires-Dist: pytest==9.0.2; extra == "dev"
+Requires-Dist: pytest-asyncio==1.3.0; extra == "dev"
+Requires-Dist: httpx==0.28.1; extra == "dev"
+Requires-Dist: ruff==0.15.9; extra == "dev"
+Requires-Dist: black==26.3.1; extra == "dev"
+Requires-Dist: mypy==1.20.0; extra == "dev"
+Requires-Dist: types-PyYAML==6.0.12.20250915; extra == "dev"

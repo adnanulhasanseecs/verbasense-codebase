@@ -1,0 +1,22 @@
+id: courtsense
+domain: judicial
+features:
+  - transcription
+  - summarization
+  - action_items
+ui:
+  name: CourtSense
+  labels:
+    summary: "Proceedings Summary"
+    actions: "Directives"
+    decisions: "Key Decisions"
+pipeline:
+  stages:
+    - audio_received
+    - transcription
+    - diarization
+    - summarization
+entities:
+  - judge
+  - case
+  - evidence
