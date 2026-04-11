@@ -4,16 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRole } from "@/components/rbac/RoleContext";
 import { RoleBadge } from "@/components/rbac/RoleBadge";
+import { APP_NAV_LINKS } from "@/lib/nav-config";
 import { NAV_ACCESS, ROLE_LABELS, hasRole, type UserRole } from "@/lib/rbac";
-
-const links = [
-  { href: "/dashboard", label: "Dashboard", key: "dashboard" as const },
-  { href: "/live", label: "Live Session", key: "live" as const },
-  { href: "/transcribe", label: "Transcribe", key: "upload" as const },
-  { href: "/documents", label: "Documents", key: "documents" as const },
-  { href: "/sessions", label: "Sessions", key: "sessions" as const },
-  { href: "/admin/rbac", label: "RBAC / Admin", key: "admin" as const },
-];
 
 export function NavBar() {
   const pathname = usePathname();
@@ -39,9 +31,7 @@ export function NavBar() {
       </select>
 
       <nav className="flex items-center gap-1 rounded-2xl border border-white/[0.06] bg-[#0B0F19]/50 p-1 shadow-inner shadow-black/40 backdrop-blur-md">
-        {links
-          .filter((l) => hasRole(role, NAV_ACCESS[l.key]))
-          .map((l) => {
+        {APP_NAV_LINKS.filter((l) => hasRole(role, NAV_ACCESS[l.key])).map((l) => {
             const active = pathname === l.href || pathname.startsWith(`${l.href}/`);
             return (
               <Link

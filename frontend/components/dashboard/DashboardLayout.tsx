@@ -1,8 +1,8 @@
 ﻿"use client";
 
 import { Activity, AlertTriangle, CheckCircle2, Clock3, Gavel, Scale } from "lucide-react";
-import type { ComponentType } from "react";
-import { useEffect, useState } from "react";
+import type { ComponentType, ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -13,7 +13,6 @@ import {
   LineChart,
   Pie,
   PieChart,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
@@ -106,40 +105,95 @@ export function DashboardLayout() {
   }, []);
 
   return (
-    <div className="space-y-6 p-6">
-      <section className="rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#0F172A] via-[#111A2D] to-[#0B0F19] p-6 shadow-[0_26px_70px_-30px_rgba(15,23,42,0.9)] backdrop-blur-md">
+    <div className="w-full space-y-6">
+      <section className="w-full rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#0F172A] via-[#111A2D] to-[#0B0F19] p-6 shadow-[0_26px_70px_-30px_rgba(15,23,42,0.9)] backdrop-blur-md">
         <p className="text-xs uppercase tracking-[0.16em] text-[#9CA3AF]">CourtSense Command Center</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#F9FAFB]">
           Operational Dashboard
         </h1>
       </section>
 
-      <section className="grid grid-cols-12 gap-6">
+      <div className="grid w-full grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
         {kpis.map((kpi) => (
           <KPICardWithTrend key={kpi.title} mounted={mounted} {...kpi} />
         ))}
-      </section>
+      </div>
 
-      <section className="grid grid-cols-12 gap-6">
-        <LiveSessionPanel />
-        <ActivityChart mounted={mounted} />
-      </section>
+      <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="min-w-0 lg:col-span-8">
+          <LiveSessionPanel />
+        </div>
+        <div className="min-w-0 lg:col-span-4">
+          <ActivityChart mounted={mounted} />
+        </div>
+      </div>
 
-      <section className="grid grid-cols-12 gap-6">
-        <SessionsAnalyticsChart mounted={mounted} />
-        <IntelligencePanel role={role} />
-      </section>
+      <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="min-w-0 lg:col-span-8">
+          <SessionsAnalyticsChart mounted={mounted} />
+        </div>
+        <div className="min-w-0 lg:col-span-4">
+          <IntelligencePanel role={role} />
+        </div>
+      </div>
 
-      <section className="grid grid-cols-12 gap-6">
-        <DocumentsPieChart mounted={mounted} />
-        <ActionsTimeline />
-      </section>
+      <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="min-w-0 lg:col-span-6">
+          <DocumentsPieChart mounted={mounted} />
+        </div>
+        <div className="min-w-0 lg:col-span-6">
+          <ActionsTimeline />
+        </div>
+      </div>
     </div>
   );
 }
 
-function panelClass(span: string) {
-  return `col-span-12 ${span} rounded-2xl border border-white/[0.10] bg-gradient-to-br from-[#16213A] via-[#111B30] to-[#0B0F19] p-5 shadow-[0_24px_64px_-28px_rgba(15,23,42,0.92)] backdrop-blur-md`;
+const panelSurface =
+  "rounded-2xl border border-white/[0.10] bg-gradient-to-br from-[#16213A] via-[#111B30] to-[#0B0F19] p-5 shadow-[0_24px_64px_-28px_rgba(15,23,42,0.92)] backdrop-blur-md";
+
+function useElementSize(minWidth = 120, minHeight = 80) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [size, setSize] = useState({ width: minWidth, height: minHeight });
+
+  useEffect(() => {
+    if (!ref.current) return;
+    let raf = 0;
+
+    const measure = () => {
+      if (!ref.current) return;
+      const rect = ref.current.getBoundingClientRect();
+      const nextWidth = Math.max(minWidth, Math.floor(rect.width || 0));
+      const nextHeight = Math.max(minHeight, Math.floor(rect.height || 0));
+      setSize((prev) =>
+        prev.width === nextWidth && prev.height === nextHeight
+          ? prev
+          : { width: nextWidth, height: nextHeight },
+      );
+    };
+
+    const scheduleMeasure = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(measure);
+    };
+
+    scheduleMeasure();
+    window.addEventListener("resize", scheduleMeasure);
+
+    let observer: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver(scheduleMeasure);
+      observer.observe(ref.current);
+    }
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", scheduleMeasure);
+      observer?.disconnect();
+    };
+  }, [minWidth, minHeight]);
+
+  return { ref, size };
 }
 
 function KPICardWithTrend({
@@ -162,7 +216,7 @@ function KPICardWithTrend({
   const chartData = data.map((v, i) => ({ x: i, y: v }));
 
   return (
-    <section className={panelClass("md:col-span-6 lg:col-span-3")}>
+    <section className={panelSurface}>
       <div className="flex items-start justify-between">
         <div>
           <p className="text-[11px] uppercase tracking-[0.14em] text-[#9CA3AF]">{title}</p>
@@ -176,25 +230,38 @@ function KPICardWithTrend({
         <span className={`text-sm font-semibold ${up ? "text-emerald-300" : "text-rose-300"}`}>
           {up ? "▲" : "▼"} {trend}
         </span>
-        <div className="h-14 w-28">
-          {mounted ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <Line type="monotone" dataKey="y" stroke={up ? "#67E8F9" : "#FB7185"} strokeWidth={3} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-full w-full rounded bg-[#0B0F19]/70" />
-          )}
-        </div>
+        <MiniSparkline data={chartData} color={up ? "#67E8F9" : "#FB7185"} mounted={mounted} />
       </div>
     </section>
   );
 }
 
+function MiniSparkline({
+  data,
+  color,
+  mounted,
+}: {
+  data: { x: number; y: number }[];
+  color: string;
+  mounted: boolean;
+}) {
+  const { ref, size } = useElementSize(90, 56);
+  return (
+    <div ref={ref} className="h-14 w-28 min-w-0">
+      {mounted ? (
+        <LineChart width={size.width} height={size.height} data={data}>
+          <Line type="monotone" dataKey="y" stroke={color} strokeWidth={3} dot={false} />
+        </LineChart>
+      ) : (
+        <div className="h-full w-full rounded bg-[#0B0F19]/70" />
+      )}
+    </div>
+  );
+}
+
 function LiveSessionPanel() {
   return (
-    <section className={panelClass("lg:col-span-8") + " overflow-hidden min-h-[340px]"}>
+    <section className={`${panelSurface} overflow-hidden min-h-[340px] w-full`}>
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">Live Session</h3>
         <span className="inline-flex items-center gap-2 rounded-full border border-rose-300/35 bg-rose-500/15 px-3 py-1 text-xs font-semibold text-rose-100 shadow-[0_0_24px_rgba(244,63,94,0.35)]">
@@ -236,62 +303,50 @@ function LiveSessionPanel() {
 
 function ActivityChart({ mounted }: { mounted: boolean }) {
   return (
-    <section className={panelClass("lg:col-span-4") + " min-h-[340px]"}>
+    <section className={`${panelSurface} min-h-[340px] w-full`}>
       <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">Sessions Per Hour</h3>
-      <div className="mt-3 h-64">
-        {mounted ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={sessionsPerHour}>
-              <XAxis dataKey="hour" tick={{ fill: "#9CA3AF", fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: "#9CA3AF", fontSize: 11 }} axisLine={false} tickLine={false} />
-              <Tooltip cursor={{ fill: "rgba(255,255,255,0.03)" }} />
-              <Bar dataKey="sessions" fill="#60A5FA" barSize={24} radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="h-full w-full rounded-xl bg-[#0B0F19]/70" />
+      <MeasuredChartBlock mounted={mounted} className="mt-3 h-48 w-full min-w-0" minWidth={260} minHeight={180}>
+        {(w, h) => (
+          <BarChart width={w} height={h} data={sessionsPerHour}>
+            <XAxis dataKey="hour" tick={{ fill: "#9CA3AF", fontSize: 11 }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fill: "#9CA3AF", fontSize: 11 }} axisLine={false} tickLine={false} />
+            <Tooltip cursor={{ fill: "rgba(255,255,255,0.03)" }} />
+            <Bar dataKey="sessions" fill="#60A5FA" barSize={24} radius={[6, 6, 0, 0]} />
+          </BarChart>
         )}
-      </div>
+      </MeasuredChartBlock>
     </section>
   );
 }
 
 function SessionsAnalyticsChart({ mounted }: { mounted: boolean }) {
   return (
-    <section className={panelClass("lg:col-span-8") + " space-y-4 min-h-[360px]"}>
+    <section className={`${panelSurface} min-h-[360px] w-full space-y-4`}>
       <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">Sessions Analytics</h3>
       <div className="grid gap-4 lg:grid-cols-2">
         <div>
           <p className="text-xs text-[#9CA3AF]">Sessions by courtroom</p>
-          <div className="mt-2 h-52">
-            {mounted ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={byCourtroom}>
-                  <XAxis dataKey="name" tick={{ fill: "#9CA3AF", fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: "#9CA3AF", fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <Bar dataKey="value" fill="#818CF8" barSize={26} radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full w-full rounded-xl bg-[#0B0F19]/70" />
+          <MeasuredChartBlock mounted={mounted} className="mt-2 h-48 w-full min-w-0" minWidth={240} minHeight={160}>
+            {(w, h) => (
+              <BarChart width={w} height={h} data={byCourtroom}>
+                <XAxis dataKey="name" tick={{ fill: "#9CA3AF", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: "#9CA3AF", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <Bar dataKey="value" fill="#818CF8" barSize={26} radius={[6, 6, 0, 0]} />
+              </BarChart>
             )}
-          </div>
+          </MeasuredChartBlock>
         </div>
         <div>
           <p className="text-xs text-[#9CA3AF]">Sessions by day</p>
-          <div className="mt-2 h-52">
-            {mounted ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={byDay}>
-                  <XAxis dataKey="day" tick={{ fill: "#9CA3AF", fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: "#9CA3AF", fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <Area type="monotone" dataKey="value" stroke="#22D3EE" fill="#22D3EE66" strokeWidth={3} />
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full w-full rounded-xl bg-[#0B0F19]/70" />
+          <MeasuredChartBlock mounted={mounted} className="mt-2 h-48 w-full min-w-0" minWidth={240} minHeight={160}>
+            {(w, h) => (
+              <AreaChart width={w} height={h} data={byDay}>
+                <XAxis dataKey="day" tick={{ fill: "#9CA3AF", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: "#9CA3AF", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <Area type="monotone" dataKey="value" stroke="#22D3EE" fill="#22D3EE66" strokeWidth={3} />
+              </AreaChart>
             )}
-          </div>
+          </MeasuredChartBlock>
         </div>
       </div>
     </section>
@@ -303,7 +358,7 @@ function IntelligencePanel({ role }: { role: string }) {
   const actions = ["Issue order draft", "Confirm docket update", "Notify chambers"];
 
   return (
-    <section className={panelClass("lg:col-span-4") + " min-h-[360px]"}>
+    <section className={`${panelSurface} min-h-[360px] w-full`}>
       <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">Intelligence Snapshot</h3>
       <div className="mt-3 rounded-xl border border-white/[0.08] bg-[#0B0F19]/70 p-3">
         <p className="text-base text-[#E5E7EB]">Role-aware summary stream for {role} operations.</p>
@@ -328,25 +383,21 @@ function IntelligencePanel({ role }: { role: string }) {
 
 function DocumentsPieChart({ mounted }: { mounted: boolean }) {
   return (
-    <section className={panelClass("lg:col-span-6") + " min-h-[340px]"}>
+    <section className={`${panelSurface} min-h-[340px] w-full`}>
       <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">Document Distribution</h3>
       <div className="mt-3 grid gap-4 lg:grid-cols-[1fr_220px]">
-        <div className="h-64">
-          {mounted ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={docTypes} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={96} innerRadius={48}>
-                  {docTypes.map((entry) => (
-                    <Cell key={entry.name} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-full w-full rounded-xl bg-[#0B0F19]/70" />
+        <MeasuredChartBlock mounted={mounted} className="h-48 w-full min-w-0" minWidth={260} minHeight={180}>
+          {(w, h) => (
+            <PieChart width={w} height={h}>
+              <Pie data={docTypes} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={96} innerRadius={48}>
+                {docTypes.map((entry) => (
+                  <Cell key={entry.name} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
           )}
-        </div>
+        </MeasuredChartBlock>
         <ul className="space-y-3 text-sm">
           {docTypes.map((d) => (
             <li key={d.name} className="flex items-center justify-between rounded-xl border border-white/[0.08] bg-[#0B0F19]/70 px-3 py-2">
@@ -360,9 +411,35 @@ function DocumentsPieChart({ mounted }: { mounted: boolean }) {
   );
 }
 
+function MeasuredChartBlock({
+  mounted,
+  className,
+  children,
+  minWidth = 220,
+  minHeight = 140,
+}: {
+  mounted: boolean;
+  className: string;
+  children: (width: number, height: number) => ReactNode;
+  minWidth?: number;
+  minHeight?: number;
+}) {
+  const { ref, size } = useElementSize(minWidth, minHeight);
+
+  return (
+    <div ref={ref} className={className}>
+      {mounted ? (
+        children(size.width, size.height)
+      ) : (
+        <div className="h-full w-full rounded-xl bg-[#0B0F19]/70" />
+      )}
+    </div>
+  );
+}
+
 function ActionsTimeline() {
   return (
-    <section className={panelClass("lg:col-span-6") + " min-h-[340px]"}>
+    <section className={`${panelSurface} min-h-[340px] w-full`}>
       <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">Pending Actions Timeline</h3>
       <ol className="mt-4 space-y-3">
         {timeline.map((t, i) => (

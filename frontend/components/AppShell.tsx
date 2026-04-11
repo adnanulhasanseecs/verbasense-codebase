@@ -16,7 +16,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 alt="VerbaSense logo"
                 width={34}
                 height={34}
-                className="object-contain"
+                className="h-auto w-auto object-contain"
                 priority
               />
             </span>
