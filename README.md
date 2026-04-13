@@ -56,6 +56,7 @@ See `docs/VERSIONS.md` (checked against npm/PyPI as of April 2026; re-pin for pr
 
 | Area | Command |
 |------|---------|
+| CI (same as GitHub Actions) | Backend: `cd backend && ruff check app tests && black --check app tests && mypy app && pytest` · Frontend: `cd frontend && npm run lint && npm test -- --ci && npm run build` |
 | Backend tests | `cd backend && pytest` |
 | Backend lint | `cd backend && ruff check app tests && black --check app tests && mypy app` |
 | Frontend build | `cd frontend && npm run build` |

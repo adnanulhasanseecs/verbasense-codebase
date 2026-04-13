@@ -25,7 +25,7 @@ Update this file as work completes. Prefer checking items only when verified (te
 
 ### 1.1 Unit tests (repository & DX)
 
-- [ ] **CI workflow** (or local script) runs backend + frontend unit test suites on push/PR
+- [x] **CI workflow** — GitHub Actions (`.github/workflows/ci.yml`): backend ruff/black/mypy/pytest + frontend eslint/jest/build on push/PR to `main`/`master`
 - [ ] **Env contract:** test that required env vars are documented and validated where applicable (fail fast with clear message)
 - [x] *(If shared root utilities exist)* unit tests for any cross-package helpers — **N/A** (no shared root package yet)
 
@@ -83,11 +83,11 @@ Every error response:
 **Endpoints**
 
 - [x] **`POST /upload`:** success (**201**), rejects bad file type — **covered** (`test_upload_and_job.py`)
-- [ ] **`POST /upload`:** rejects oversize file, invalid metadata — **not covered** by automated tests yet
-- [ ] **`GET /job/{id}`:** **404** unknown id — **not covered** explicitly (behavior via FastAPI)
+- [x] **`POST /upload`:** rejects oversize file (**413**), invalid metadata (**400**) — **covered** (`test_api_contract_errors.py`)
+- [x] **`GET /job/{id}`:** **404** unknown id — **covered** (`test_api_contract_errors.py`)
 - [x] **`GET /job/{id}`:** returns job shape; polling until `completed` — **covered**
 - [x] **`GET /result/{id}`:** returns `OutputSchema` when complete — **covered**; aligns with §7
-- [ ] **`GET /result/{id}`:** **404** not ready — **not covered** by unit test
+- [x] **`GET /result/{id}`:** **404** not ready, **409** when job **failed** — **covered** (`test_api_contract_errors.py`)
 - [x] **`GET /config/domain/{id}`:** returns config; **404** unknown domain — **covered**
 - [x] **`GET /health`:** returns 200 — **covered**
 - [ ] **OpenAPI:** snapshot or schema test — **not added** (optional)
@@ -95,8 +95,8 @@ Every error response:
 **Error contract & IDs**
 
 - [x] Error responses for exercised paths match **§2.5** shape (e.g. unknown domain) — **partial coverage**
-- [ ] Full matrix: every error path + **`request_id`** UUID assertions — **pending**
-- [ ] Invalid UUID path params — **FastAPI default 422**; explicit test **pending**
+- [ ] Full matrix: every error path + **`request_id`** UUID assertions — **partial** (spot-check + key paths in `test_api_contract_errors.py`)
+- [x] Invalid UUID path params — **422** + error envelope — **covered** (`test_api_contract_errors.py`)
 
 ---
 
@@ -211,7 +211,7 @@ Every error response:
 ### 6.5 Design system (VerbaSense / CourtSense)
 
 - [x] Colors: background `#0B0F19`, surface `#121826`, accents `#3B82F6` / `#6366F1`, highlight `#22D3EE`, text `#E5E7EB` / `#9CA3AF`
-- [x] Branding: `AppShell` mark + metadata title **CourtSense · VerbaSense**, `public/favicon.svg`
+- [x] Branding: `AppShell` mark + metadata title **CourtSense · VerbaSense**; favicon via Next.js **`app/icon.png`**, **`app/apple-icon.png`**, **`app/favicon.ico`** (VerbaSense shield logo; square canvas for `.ico`); reusable asset copy at **`public/images/brand/verbasense-logo.png`**. Legacy **`public/favicon.svg`** may remain unused by the App Router metadata pipeline.
 - [x] `:focus-visible` outline in globals; keyboard-accessible upload control — **spot-check recommended** for full WCAG audit
 
 #### 6.5.1 Unit tests (design system primitives)
@@ -244,7 +244,7 @@ Record answers here so backend, frontend, and tests stay aligned.
 
 - [x] **TestClient** exercises upload → poll → result (`test_upload_and_job.py`)
 - [x] **Status transition** to `completed` with async mock pipeline (`MOCK_DELAY=0` in tests)
-- [ ] **Error contract** on every status code — **partial** (see §2.7)
+- [x] **Error contract** on every status code — **partial** (§2.7 gaps closed for 400/404/409/413/422; OpenAPI snapshot still optional)
 
 ### 8.2 Frontend — integration (RTL)
 
@@ -253,7 +253,7 @@ Record answers here so backend, frontend, and tests stay aligned.
 ### 8.3 E2E (Playwright)
 
 - [ ] **Full demo path** (upload → job → export) — **not automated**; smoke tests only (`e2e/smoke.spec.ts`: dashboard + upload page load)
-- [x] **Base URL** `http://localhost:3000` (Playwright `baseURL`); document: run `npm run dev` before `npm run test:e2e` (see `README.md`)
+- [x] **Base URL** `http://localhost:3011` (Playwright `baseURL`, overridable via `PLAYWRIGHT_BASE_URL`); document: run `npm run dev` before `npm run test:e2e` (see `README.md`)
 - [x] Deterministic mock in tests via **`MOCK_DELAY=0`**
 
 ### 8.4 Quality gates
@@ -279,7 +279,7 @@ Record answers here so backend, frontend, and tests stay aligned.
 
 ## 10. Final verification (before “done”)
 
-- [x] `docs/progress.md` updated to reflect current implementation (this pass)
+- [x] `docs/progress.md` updated to reflect current implementation (latest: 2026-04-11)
 - [ ] **All §1–§9 unit-test subsections** — **gaps remain** (see unchecked items above); N/A noted where applicable
 - [x] README run instructions verified on dev machine (best effort)
 - [ ] Error handling manually smoke-tested (400, 404, failure job) — **recommended before release demo**
@@ -299,4 +299,4 @@ Record answers here so backend, frontend, and tests stay aligned.
 
 ---
 
-*Last updated: 2026-04-05 — aligned with implemented CourtSense Phase A/B codebase.*
+*Last updated: 2026-04-11 — CI workflow + `test_api_contract_errors.py` (§2.7 gaps); favicon/branding notes and Playwright `3011` in prior edit.*
