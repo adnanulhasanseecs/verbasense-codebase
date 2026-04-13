@@ -37,6 +37,12 @@ jobs:
       - name: Pytest
         run: pytest
 
+      - name: Alembic migration smoke (upgrade/downgrade/upgrade)
+        run: |
+          alembic upgrade head
+          alembic downgrade base
+          alembic upgrade head
+
   frontend:
     name: Frontend (eslint, jest, build)
     runs-on: ubuntu-latest

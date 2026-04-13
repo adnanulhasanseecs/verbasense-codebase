@@ -48,6 +48,7 @@ async def upload_audio(
     metadata: str | None = Form(default=None),
     domain: str = Form(default="courtsense"),
     x_mock_failure: Annotated[str | None, Header(alias="X-Mock-Failure")] = None,
+    x_idempotency_key: Annotated[str | None, Header(alias="X-Idempotency-Key")] = None,
 ) -> JobResponse:
     """Accept multipart upload; optional JSON `metadata` and `domain` form fields."""
     filename = file.filename or "audio"
@@ -71,7 +72,12 @@ async def upload_audio(
     _ = await _read_upload_with_limit(file, settings.max_upload_bytes)
     force_failure = (x_mock_failure or "").strip().lower() in ("1", "true", "yes")
 
-    record = await jobs.create_job(cfg, meta, force_failure=force_failure)
+    record = await jobs.create_job(
+        cfg,
+        meta,
+        force_failure=force_failure,
+        idempotency_key=x_idempotency_key,
+    )
     return job_to_response(record)
 
 

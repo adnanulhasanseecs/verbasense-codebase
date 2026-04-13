@@ -2,7 +2,9 @@
 
 import io
 import time
+from uuid import UUID
 
+from app.services.job_service import get_job_service
 from fastapi.testclient import TestClient
 
 
@@ -73,3 +75,63 @@ def test_get_result_when_ready(client: TestClient) -> None:
     payload = rr.json()
     assert payload["output"]["schema_version"] == "v1"
     assert len(payload["output"]["transcript"]) >= 1
+
+
+def test_upload_idempotency_key_reuses_existing_job(client: TestClient) -> None:
+    name, data, ctype = _wav_file()
+    r1 = client.post(
+        "/api/v1/upload",
+        files={"file": (name, data, ctype)},
+        data={"domain": "courtsense"},
+        headers={"X-Idempotency-Key": "case-courtsense-001"},
+    )
+    assert r1.status_code == 201
+
+    name2, data2, ctype2 = _wav_file()
+    r2 = client.post(
+        "/api/v1/upload",
+        files={"file": (name2, data2, ctype2)},
+        data={"domain": "courtsense"},
+        headers={"X-Idempotency-Key": "case-courtsense-001"},
+    )
+    assert r2.status_code == 201
+    assert r1.json()["id"] == r2.json()["id"]
+
+
+def test_completed_job_records_provider_telemetry(client: TestClient) -> None:
+    name, data, ctype = _wav_file()
+    up = client.post(
+        "/api/v1/upload",
+        files={"file": (name, data, ctype)},
+        data={"domain": "courtsense"},
+    )
+    assert up.status_code == 201
+    jid = up.json()["id"]
+
+    deadline = time.time() + 8
+    status = ""
+    while time.time() < deadline:
+        jr = client.get(f"/api/v1/job/{jid}")
+        assert jr.status_code == 200
+        status = jr.json()["status"]
+        if status == "completed":
+            break
+        time.sleep(0.05)
+    assert status == "completed"
+
+    service = get_job_service()
+    events = service._repo.list_events(UUID(jid))
+    telemetry = None
+    for e in reversed(events):
+        maybe = e.payload.get("telemetry")
+        if isinstance(maybe, dict):
+            telemetry = maybe
+            break
+
+    assert telemetry is not None
+    assert telemetry["provider"] == "mock"
+    assert telemetry["model"] == "mock-v1"
+    assert isinstance(telemetry["latency_ms"], int)
+    assert telemetry["latency_ms"] >= 0
+    assert isinstance(telemetry["token_usage_estimate"], int)
+    assert telemetry["token_usage_estimate"] > 0

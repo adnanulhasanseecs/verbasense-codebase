@@ -19,6 +19,7 @@ from app.api.exceptions import AppError
 from app.api.v1.router import router as v1_router
 from app.config.loader import load_domain_configs
 from app.config.settings import get_settings
+from app.db import dispose_engine, init_db
 from app.schemas.errors import ErrorResponse
 
 logging.basicConfig(level=logging.INFO)
@@ -28,9 +29,11 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
+    init_db(settings)
     app.state.domains = load_domain_configs(settings)
     logger.info("startup.complete domains=%s", sorted(app.state.domains.ids()))
     yield
+    dispose_engine()
     logger.info("shutdown.complete")
 
 

@@ -1,4 +1,4 @@
-# VerbaSense — CourtSense Phase A & B Progress
+# VerbaSense — CourtSense Phase A, B & C Progress
 
 **Scope:** Contract-first backend, deterministic mock pipeline, demo-ready Next.js UI, domain config, tests, and minimal security.  
 **Standard:** Production-ready structure and discipline (not a throwaway prototype).
@@ -13,6 +13,36 @@ Update this file as work completes. Prefer checking items only when verified (te
 - [x] Done and verified  
 
 **Notes:** Use the **Decisions & specs** section to record agreed formats (upload metadata, domain IDs, failure hooks) so implementation stays consistent.
+
+---
+
+## Status snapshot
+
+### A/B sections (current state)
+
+| Section | Status | Owner | Target date | Blockers / notes |
+|--------|--------|-------|-------------|------------------|
+| 1. Repository & DX | 🟡 Mostly done | `TBD` | `TBD` | Env contract test still open (§1.1) |
+| 2. API contracts | 🟡 Mostly done | `TBD` | `TBD` | OpenAPI snapshot + full error matrix still open (§2.7) |
+| 3. Domain configuration | 🟡 In progress | `TBD` | `TBD` | Feature gating and invalid YAML tests pending (§3.1) |
+| 4. Schemas & mock pipeline | 🟡 In progress | `TBD` | `TBD` | Failure-mode + storage unit tests pending (§4.4) |
+| 5. Security & operations | 🟡 In progress | `TBD` | `TBD` | CORS/logging/413 tests pending (§5.1) |
+| 6. Frontend app router | 🟡 In progress | `TBD` | `TBD` | API client/polling/RTL/a11y tests pending (§6.x) |
+| 7. Decisions & specs | 🟢 Stable baseline | `TBD` | `TBD` | Update as new AI/auth decisions are finalized |
+| 8. Integration & E2E | 🟡 In progress | `TBD` | `TBD` | Full upload→job→export E2E still pending (§8.3) |
+| 9. Future compatibility | 🟡 In progress | `TBD` | `TBD` | Second domain + stray literal guard pending (§9.1) |
+| 10. Final verification | 🟡 In progress | `TBD` | `TBD` | Manual error smoke + accessibility pass pending |
+
+### Phase C tracks (planned / execution)
+
+| Track | Status | Owner | Target date | Blockers / notes |
+|------|--------|-------|-------------|------------------|
+| 11.1 C1 Persistence & async infra | 🟡 In progress | `TBD` | `TBD` | DB + migrations + in-process queue/retry + idempotency + retention landed; external worker/DLQ hardening still follow-up |
+| 11.2 C2 AI provider abstraction | 🟡 In progress | `TBD` | `TBD` | Interface + factory + config routing + fallback + validation + telemetry tests landed; real external adapters still pending |
+| 11.3 C3 Auth & authorization | ⚪ Planned | `TBD` | `TBD` | Can start in parallel with agreed user/account model |
+| 11.4 C4 Admin console | ⚪ Planned | `TBD` | `TBD` | Can start UI in parallel; backend policy hooks required |
+| 11.5 C5 Security hardening | ⚪ Planned | `TBD` | `TBD` | Needs auth + provider secrets decisions |
+| 11.6 C6 Eval/rollout gates | ⚪ Planned | `TBD` | `TBD` | Needs provider outputs and telemetry from C2/C1 |
 
 ---
 
@@ -287,6 +317,113 @@ Record answers here so backend, frontend, and tests stay aligned.
 
 ---
 
+## 11. Phase C — productionization plan (AI + auth + admin)
+
+**Goal:** Move from deterministic mock pipeline to production-ready multi-provider AI flows with real authentication, account management, and secure operations.
+
+### 11.1 C1 — Persistence & async job infrastructure (**start here**)
+
+- [x] Introduce durable job persistence (DB-backed `JobService`) for jobs/results/status history; in-memory singleton replaced as source of truth for job state
+- [x] Add migration tooling + baseline schema foundation (`alembic`, `alembic.ini`, baseline revision for `jobs` + `job_events`; broader auth/account tables still pending)
+- [x] Add async worker/queue for long-running AI tasks (in-process queue workers + retries/backoff + retry-exhausted terminal failure state)
+- [x] Add idempotent job creation and replay-safe processing semantics (`X-Idempotency-Key` reuse returns existing job)
+- [x] Define retention/cleanup policy for uploads, intermediate artifacts, and results (terminal job cleanup via configurable retention window)
+
+**C1 plain-English summary (what was implemented and why it matters):**
+- [x] We moved job tracking from temporary memory to a real database-backed store, so job status does **not** disappear when service internals reset.
+- [x] We now keep a `job_events` history (created/updated snapshots), which helps debugging and later audit/reporting.
+- [x] Migration tooling (Alembic) is set up, so schema changes can be versioned and applied consistently across environments.
+- [x] Jobs now go through worker queues with retry logic, so transient processing failures can recover automatically.
+- [x] Repeated uploads with the same idempotency key no longer create duplicate jobs, which prevents accidental double-processing.
+- [x] Old terminal jobs can be purged based on retention settings, helping keep storage predictable.
+
+#### 11.1.1 Unit/integration tests (C1)
+
+- [x] Repository-level tests for `jobs` CRUD and event history (`tests/test_job_repository.py`)
+- [x] Queue/worker behavior covered at service/API level for normal completion and retry-safe lifecycle; dedicated poison-job stress suite still recommended follow-up
+- [x] Integration test: upload → persisted job → completed/failed result with DB-backed reads (existing API tests pass with DB-backed service)
+- [x] Migration smoke in CI (fresh DB + upgrade + rollback sanity) — added to `.github/workflows/ci.yml` backend job
+
+### 11.2 C2 — AI provider abstraction & model routing
+
+- [x] Introduce provider interfaces for structured output generation (`OutputProvider` protocol + factory wiring; baseline for `summary`/`entities`/`action_items` in current `OutputSchema`)
+- [x] Implement initial provider adapter behind config flags (mock adapter selected via `OUTPUT_PROVIDER=mock`)
+- [x] Add model registry/config (`provider`, `model`, `temperature`, `max_tokens`, `timeout`) scoped by domain/flow baseline (`OUTPUT_*` settings + domain override maps; account scoping pending auth model)
+- [x] Add deterministic fallback policy across providers/models for resilience (primary + ordered fallback chain)
+- [x] Validate and normalize model outputs into stable `OutputSchema` (provider contract returns `OutputSchema`; API contract unchanged)
+
+**C2 plain-English summary (start of integration phase):**
+- [x] The backend can now choose a model provider through a common interface, instead of hard-coding pipeline output generation.
+- [x] Today it still uses the deterministic mock provider by default, but the architecture is now ready to plug real providers one-by-one.
+- [x] This reduces future rework: swapping providers can happen in one place without changing API endpoints.
+
+#### 11.2.1 Unit/integration tests (C2)
+
+- [x] Adapter contract tests with mocked provider behaviors (`mock`, `failing`, `invalid`) via `tests/test_provider_factory.py`
+- [x] Output-schema validation tests for malformed/partial model payloads (invalid payload falls back or fails with clear error)
+- [x] Routing tests for domain-level model/provider selection and fallback behavior (`OUTPUT_PROVIDER_BY_DOMAIN_JSON`, fallback chain)
+- [x] Cost/latency telemetry tests (token usage/latency/provider/model captured in job events; see `test_completed_job_records_provider_telemetry`)
+
+### 11.3 C3 — Real authentication & authorization
+
+- [ ] Select and implement auth strategy (OIDC/Auth.js/custom JWT) with secure session handling
+- [ ] Add backend auth middleware and policy enforcement on protected API routes
+- [ ] Implement roles/permissions for core personas (`admin`, `operator`, `reviewer`, `viewer`)
+- [ ] Add invite/onboarding flow and account membership lifecycle
+- [ ] Add audit trail for auth-sensitive events (login, invite, role change, deactivation)
+
+#### 11.3.1 Unit/integration tests (C3)
+
+- [ ] Auth middleware tests (unauthenticated → 401, unauthorized → 403, permitted → 2xx)
+- [ ] RBAC matrix tests for protected endpoints and sensitive actions
+- [ ] Session tests (expiration, refresh/rotation, logout invalidation)
+- [ ] Invite acceptance and membership edge-case tests
+
+### 11.4 C4 — Admin console (real users + account/model setup)
+
+- [ ] Build admin pages for user list, invite user, role assignment, deactivate/reactivate user
+- [ ] Build account settings for AI provider credentials and per-flow model mapping
+- [ ] Build audit log viewer with filtering (actor, action, time, account)
+- [ ] Add safeguards for high-risk actions (confirmation + privileged role checks)
+- [ ] Add UX states for empty/loading/error and admin route-level protection
+
+#### 11.4.1 Unit/E2E tests (C4)
+
+- [ ] RTL tests for admin forms/validation, role changes, and guarded actions
+- [ ] Playwright E2E for admin happy path (invite → role assign → restricted page access)
+- [ ] Negative E2E (non-admin blocked from admin pages and admin APIs)
+- [ ] Accessibility checks for admin critical flows (keyboard/focus/form errors)
+
+### 11.5 C5 — Security hardening & compliance basics
+
+- [ ] Move provider credentials to a secrets manager strategy (no plaintext secrets in DB/logs)
+- [ ] Add PII handling/redaction policy for prompts, logs, and exports
+- [ ] Add request throttling/rate limits for auth/admin and high-cost AI endpoints
+- [ ] Add incident-ready observability (structured logs, metrics, alerts, trace correlation)
+- [ ] Add backup/restore and disaster-recovery runbook for persistence layer
+
+#### 11.5.1 Tests/verification (C5)
+
+- [ ] Security regression tests for protected routes and key management boundaries
+- [ ] Log-scrubbing checks (no secret/token/PII leakage in standard logs)
+- [ ] Load/perf baseline for queue throughput and p95 latency by stage
+- [ ] Manual security checklist pass before enabling production keys
+
+### 11.6 C6 — Evaluation, rollout controls, and release gates
+
+- [ ] Build golden evaluation set for each AI flow (transcript quality, summary fidelity, action extraction)
+- [ ] Define rollout strategy (account-level flags, canary, fallback on provider outage)
+- [ ] Add quality/cost SLOs and dashboard for acceptance gates
+- [ ] Add release checklist tied to CI, manual QA, and eval pass criteria
+
+#### 11.6.1 Tests/verification (C6)
+
+- [ ] Automated eval pipeline on candidate model/prompt changes
+- [ ] Regression delta reports with acceptance thresholds
+- [ ] Rollback drill (switch model/provider and restore previous stable config)
+
+---
+
 ## Quick reference — prompt objectives
 
 1. Complete API contracts (requests, responses, errors)  
@@ -299,4 +436,4 @@ Record answers here so backend, frontend, and tests stay aligned.
 
 ---
 
-*Last updated: 2026-04-11 — CI workflow + `test_api_contract_errors.py` (§2.7 gaps); favicon/branding notes and Playwright `3011` in prior edit.*
+*Last updated: 2026-04-13 — C1 migration smoke wired in CI; C2 advanced with provider registry/config (`OUTPUT_*`), domain overrides, deterministic fallback chain, routing/validation tests, and telemetry assertions.*
