@@ -11,7 +11,7 @@ export function DashboardClient() {
 
   if (ids.length === 0) {
     return (
-      <div className="relative overflow-hidden rounded-3xl border border-dashed border-white/[0.12] bg-[#121826]/50 p-12 text-center shadow-inner shadow-black/40">
+      <div className="vs-card-glow relative overflow-hidden rounded-3xl border border-dashed border-white/[0.12] bg-[#121826]/50 p-12 text-center shadow-inner shadow-black/40">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.08),transparent_65%)]" />
         <div className="relative space-y-3">
           <p className="text-base font-medium text-[#E5E7EB]">No proceedings yet</p>
@@ -30,7 +30,7 @@ export function DashboardClient() {
   }
 
   return (
-    <div className="overflow-hidden rounded-3xl border border-white/[0.08] bg-[#121826]/90 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.9)] ring-1 ring-white/[0.04]">
+    <div className="vs-card-glow overflow-hidden rounded-3xl border border-white/[0.08] bg-[#121826]/90 ring-1 ring-white/[0.04]">
       <div className="grid grid-cols-[1fr_140px_100px] gap-4 border-b border-white/[0.08] bg-[#0B0F19]/40 px-5 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-[#9CA3AF] sm:grid-cols-[1fr_160px_120px]">
         <span>Job</span>
         <span>Status</span>

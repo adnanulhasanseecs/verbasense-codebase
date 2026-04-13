@@ -13,7 +13,7 @@ export function SessionViewer({ id }: { id: string }) {
   const lines = useMemo(() => MOCK_SESSION.transcript, []);
 
   return (
-    <div className="space-y-5 rounded-3xl border border-white/[0.08] bg-[#121826]/80 p-6">
+    <div className="vs-card-glow space-y-5 rounded-3xl border border-white/[0.08] bg-[#121826]/80 p-6">
       <header className="space-y-3">
         <div>
           <h1 className="text-2xl font-bold text-[#F9FAFB]">Session {id}</h1>
@@ -56,7 +56,7 @@ export function SessionViewer({ id }: { id: string }) {
               <SpeakerTranscript lines={lines} condensed={condensed} idPrefix="session-line" />
             </div>
             <aside className="lg:sticky lg:top-4 lg:max-h-[60vh] lg:overflow-y-auto">
-              <div className="rounded-2xl border border-white/[0.08] bg-[#0B0F19]/70 p-3">
+              <div className="vs-card-glow rounded-2xl border border-white/[0.08] bg-[#0B0F19]/70 p-3">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-[#9CA3AF]">
                   Transcript Navigator
                 </h3>
@@ -107,7 +107,7 @@ export function SessionViewer({ id }: { id: string }) {
       {tab === "documents" ? (
         <div className="space-y-3">
           {MOCK_SESSION.documents.map((d) => (
-            <article key={d.id} className="rounded-2xl border border-white/[0.08] bg-[#0B0F19]/70 p-4">
+            <article key={d.id} className="vs-card-glow rounded-2xl border border-white/[0.08] bg-[#0B0F19]/70 p-4">
               <p className="font-semibold text-[#E5E7EB]">{d.name}</p>
               <p className="mt-1 text-sm text-[#9CA3AF]">{d.summary}</p>
             </article>
@@ -120,7 +120,7 @@ export function SessionViewer({ id }: { id: string }) {
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <article className="rounded-2xl border border-white/[0.08] bg-[#0B0F19]/70 p-4">
+    <article className="vs-card-glow rounded-2xl border border-white/[0.08] bg-[#0B0F19]/70 p-4">
       <h3 className="text-xs font-semibold uppercase tracking-wide text-[#9CA3AF]">{title}</h3>
       <div className="mt-2 text-sm text-[#E5E7EB]">{children}</div>
     </article>

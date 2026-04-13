@@ -14,7 +14,7 @@ export default function TranscribePage() {
         }
       >
         <div className="mx-auto max-w-2xl space-y-8">
-          <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-[#121826]/90 p-8 shadow-[0_24px_80px_-36px_rgba(245,158,11,0.38)] ring-1 ring-white/[0.04]">
+          <div className="vs-card-glow relative overflow-hidden rounded-3xl border border-white/[0.08] bg-[#121826]/90 p-8">
             <div className="pointer-events-none absolute -right-16 top-0 h-40 w-40 rounded-full bg-[#6366F1]/15 blur-[70px]" />
             <div className="relative space-y-2">
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#22D3EE]/90">Transcribe</p>

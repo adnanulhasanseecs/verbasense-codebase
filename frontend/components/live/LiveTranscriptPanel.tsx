@@ -20,7 +20,7 @@ export function LiveTranscriptPanel({
   }, [lines]);
 
   return (
-    <section className="rounded-3xl border border-white/[0.08] bg-[#121826]/85 p-6 shadow-[0_18px_52px_-26px_rgba(245,158,11,0.42)]">
+    <section className="vs-card-glow rounded-3xl border border-white/[0.08] bg-[#121826]/85 p-6">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-[#9CA3AF]">Live Transcript</h2>
         <span className="inline-flex items-center gap-2 text-xs text-[#9CA3AF]">

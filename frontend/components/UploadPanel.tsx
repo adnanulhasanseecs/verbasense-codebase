@@ -54,7 +54,7 @@ export function UploadPanel() {
         }}
         onDragOver={(e) => e.preventDefault()}
         onDrop={onDrop}
-        className="flex min-h-[220px] cursor-pointer flex-col items-center justify-center rounded-3xl border border-dashed border-white/[0.14] bg-gradient-to-b from-[#121826] to-[#0B0F19] p-10 text-center shadow-inner shadow-black/40 transition hover:border-[#3B82F6]/45 hover:shadow-[0_0_60px_-20px_rgba(59,130,246,0.35)]"
+        className="vs-card-glow-inset flex min-h-[220px] cursor-pointer flex-col items-center justify-center rounded-3xl border border-dashed border-white/[0.14] bg-gradient-to-b from-[#121826] to-[#0B0F19] p-10 text-center transition hover:border-[#3B82F6]/55"
         onClick={() => document.getElementById("vs-file")?.click()}
       >
         <p className="text-sm font-semibold text-[#F9FAFB]">Drag & drop audio here</p>
@@ -71,25 +71,27 @@ export function UploadPanel() {
         ) : null}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block text-sm">
-          <span className="text-[#9CA3AF]">Case ID</span>
-          <input
-            value={caseId}
-            onChange={(e) => setCaseId(e.target.value)}
-            className="mt-1 w-full rounded-2xl border border-white/[0.08] bg-[#0B0F19] px-4 py-3 text-sm text-[#E5E7EB] placeholder:text-[#6B7280] focus:border-[#3B82F6]/60"
-            placeholder="e.g. CV-2026-0142"
-          />
-        </label>
-        <label className="block text-sm">
-          <span className="text-[#9CA3AF]">Courtroom</span>
-          <input
-            value={courtroom}
-            onChange={(e) => setCourtroom(e.target.value)}
-            className="mt-1 w-full rounded-2xl border border-white/[0.08] bg-[#0B0F19] px-4 py-3 text-sm text-[#E5E7EB] placeholder:text-[#6B7280] focus:border-[#3B82F6]/60"
-            placeholder="e.g. 4B"
-          />
-        </label>
+      <div className="vs-card-glow rounded-2xl border border-white/[0.08] bg-[#121826]/60 p-5">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block text-sm">
+            <span className="text-[#9CA3AF]">Case ID</span>
+            <input
+              value={caseId}
+              onChange={(e) => setCaseId(e.target.value)}
+              className="mt-1 w-full rounded-2xl border border-white/[0.08] bg-[#0B0F19] px-4 py-3 text-sm text-[#E5E7EB] placeholder:text-[#6B7280] focus:border-[#3B82F6]/60"
+              placeholder="e.g. CV-2026-0142"
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="text-[#9CA3AF]">Courtroom</span>
+            <input
+              value={courtroom}
+              onChange={(e) => setCourtroom(e.target.value)}
+              className="mt-1 w-full rounded-2xl border border-white/[0.08] bg-[#0B0F19] px-4 py-3 text-sm text-[#E5E7EB] placeholder:text-[#6B7280] focus:border-[#3B82F6]/60"
+              placeholder="e.g. 4B"
+            />
+          </label>
+        </div>
       </div>
 
       {error ? (

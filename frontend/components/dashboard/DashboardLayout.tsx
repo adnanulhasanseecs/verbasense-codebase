@@ -106,7 +106,7 @@ export function DashboardLayout() {
 
   return (
     <div className="w-full space-y-6">
-      <section className="w-full rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#0F172A] via-[#111A2D] to-[#0B0F19] p-6 shadow-[0_26px_70px_-30px_rgba(15,23,42,0.9)] backdrop-blur-md">
+      <section className="vs-card-glow w-full rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#0F172A] via-[#111A2D] to-[#0B0F19] p-6 backdrop-blur-md">
         <p className="text-xs uppercase tracking-[0.16em] text-[#9CA3AF]">CourtSense Command Center</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#F9FAFB]">
           Operational Dashboard
@@ -119,29 +119,29 @@ export function DashboardLayout() {
         ))}
       </div>
 
-      <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-12">
-        <div className="min-w-0 lg:col-span-8">
+      <div className="grid w-full grid-cols-1 items-stretch gap-6 lg:grid-cols-12">
+        <div className="flex h-full min-h-0 min-w-0 lg:col-span-8">
           <LiveSessionPanel />
         </div>
-        <div className="min-w-0 lg:col-span-4">
+        <div className="flex h-full min-h-0 min-w-0 lg:col-span-4">
           <ActivityChart mounted={mounted} />
         </div>
       </div>
 
-      <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-12">
-        <div className="min-w-0 lg:col-span-8">
+      <div className="grid w-full grid-cols-1 items-stretch gap-6 lg:grid-cols-12">
+        <div className="flex h-full min-h-0 min-w-0 lg:col-span-8">
           <SessionsAnalyticsChart mounted={mounted} />
         </div>
-        <div className="min-w-0 lg:col-span-4">
+        <div className="flex h-full min-h-0 min-w-0 lg:col-span-4">
           <IntelligencePanel role={role} />
         </div>
       </div>
 
-      <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-12">
-        <div className="min-w-0 lg:col-span-6">
+      <div className="grid w-full grid-cols-1 items-stretch gap-6 lg:grid-cols-12">
+        <div className="flex h-full min-h-0 min-w-0 lg:col-span-6">
           <DocumentsPieChart mounted={mounted} />
         </div>
-        <div className="min-w-0 lg:col-span-6">
+        <div className="flex h-full min-h-0 min-w-0 lg:col-span-6">
           <ActionsTimeline />
         </div>
       </div>
@@ -150,7 +150,7 @@ export function DashboardLayout() {
 }
 
 const panelSurface =
-  "rounded-2xl border border-white/[0.10] bg-gradient-to-br from-[#16213A] via-[#111B30] to-[#0B0F19] p-5 shadow-[0_24px_64px_-28px_rgba(15,23,42,0.92)] backdrop-blur-md";
+  "vs-card-glow rounded-2xl border border-white/[0.10] bg-gradient-to-br from-[#16213A] via-[#111B30] to-[#0B0F19] p-5 backdrop-blur-md";
 
 function useElementSize(minWidth = 120, minHeight = 80) {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -261,8 +261,10 @@ function MiniSparkline({
 
 function LiveSessionPanel() {
   return (
-    <section className={`${panelSurface} overflow-hidden min-h-[340px] w-full`}>
-      <div className="flex items-center justify-between">
+    <section
+      className={`${panelSurface} flex min-h-[340px] w-full flex-col overflow-hidden lg:h-full`}
+    >
+      <div className="flex shrink-0 items-center justify-between">
         <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">Live Session</h3>
         <span className="inline-flex items-center gap-2 rounded-full border border-rose-300/35 bg-rose-500/15 px-3 py-1 text-xs font-semibold text-rose-100 shadow-[0_0_24px_rgba(244,63,94,0.35)]">
           <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-rose-400" /> LIVE
@@ -297,15 +299,18 @@ function LiveSessionPanel() {
           </ul>
         </div>
       </div>
+      <div className="min-h-0 flex-1" aria-hidden />
     </section>
   );
 }
 
 function ActivityChart({ mounted }: { mounted: boolean }) {
   return (
-    <section className={`${panelSurface} min-h-[340px] w-full`}>
-      <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">Sessions Per Hour</h3>
-      <MeasuredChartBlock mounted={mounted} className="mt-3 h-48 w-full min-w-0" minWidth={260} minHeight={180}>
+    <section className={`${panelSurface} flex min-h-[340px] w-full flex-col lg:h-full`}>
+      <h3 className="shrink-0 text-sm font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
+        Sessions Per Hour
+      </h3>
+      <MeasuredChartBlock mounted={mounted} className="mt-3 h-48 w-full min-w-0 shrink-0" minWidth={260} minHeight={180}>
         {(w, h) => (
           <BarChart width={w} height={h} data={sessionsPerHour}>
             <XAxis dataKey="hour" tick={{ fill: "#9CA3AF", fontSize: 11 }} axisLine={false} tickLine={false} />
@@ -315,15 +320,18 @@ function ActivityChart({ mounted }: { mounted: boolean }) {
           </BarChart>
         )}
       </MeasuredChartBlock>
+      <div className="min-h-0 flex-1" aria-hidden />
     </section>
   );
 }
 
 function SessionsAnalyticsChart({ mounted }: { mounted: boolean }) {
   return (
-    <section className={`${panelSurface} min-h-[360px] w-full space-y-4`}>
-      <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">Sessions Analytics</h3>
-      <div className="grid gap-4 lg:grid-cols-2">
+    <section className={`${panelSurface} flex min-h-[360px] w-full flex-col lg:h-full`}>
+      <h3 className="shrink-0 text-sm font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
+        Sessions Analytics
+      </h3>
+      <div className="mt-3 grid shrink-0 gap-4 lg:grid-cols-2">
         <div>
           <p className="text-xs text-[#9CA3AF]">Sessions by courtroom</p>
           <MeasuredChartBlock mounted={mounted} className="mt-2 h-48 w-full min-w-0" minWidth={240} minHeight={160}>
@@ -349,6 +357,7 @@ function SessionsAnalyticsChart({ mounted }: { mounted: boolean }) {
           </MeasuredChartBlock>
         </div>
       </div>
+      <div className="min-h-0 flex-1" aria-hidden />
     </section>
   );
 }
@@ -358,34 +367,40 @@ function IntelligencePanel({ role }: { role: string }) {
   const actions = ["Issue order draft", "Confirm docket update", "Notify chambers"];
 
   return (
-    <section className={`${panelSurface} min-h-[360px] w-full`}>
-      <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">Intelligence Snapshot</h3>
-      <div className="mt-3 rounded-xl border border-white/[0.08] bg-[#0B0F19]/70 p-3">
-        <p className="text-base text-[#E5E7EB]">Role-aware summary stream for {role} operations.</p>
+    <section className={`${panelSurface} flex min-h-[360px] w-full flex-col lg:h-full`}>
+      <h3 className="shrink-0 text-sm font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
+        Intelligence Snapshot
+      </h3>
+      <div className="mt-3 min-h-0 flex-1 space-y-3 overflow-y-auto">
+        <div className="rounded-xl border border-white/[0.08] bg-[#0B0F19]/70 p-3">
+          <p className="text-base text-[#E5E7EB]">Role-aware summary stream for {role} operations.</p>
+        </div>
+        <ul className="space-y-2 text-sm text-[#E5E7EB]">
+          {decisions.map((d) => (
+            <li key={d} className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-[#0B0F19]/70 px-3 py-2">
+              <Gavel size={14} className="text-[#22D3EE]" /> {d}
+            </li>
+          ))}
+        </ul>
+        <ul className="space-y-2 text-sm text-[#E5E7EB]">
+          {actions.map((a) => (
+            <li key={a} className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-[#0B0F19]/70 px-3 py-2">
+              <Clock3 size={14} className="text-[#F59E0B]" /> {a}
+            </li>
+          ))}
+        </ul>
       </div>
-      <ul className="mt-3 space-y-2 text-sm text-[#E5E7EB]">
-        {decisions.map((d) => (
-          <li key={d} className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-[#0B0F19]/70 px-3 py-2">
-            <Gavel size={14} className="text-[#22D3EE]" /> {d}
-          </li>
-        ))}
-      </ul>
-      <ul className="mt-3 space-y-2 text-sm text-[#E5E7EB]">
-        {actions.map((a) => (
-          <li key={a} className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-[#0B0F19]/70 px-3 py-2">
-            <Clock3 size={14} className="text-[#F59E0B]" /> {a}
-          </li>
-        ))}
-      </ul>
     </section>
   );
 }
 
 function DocumentsPieChart({ mounted }: { mounted: boolean }) {
   return (
-    <section className={`${panelSurface} min-h-[340px] w-full`}>
-      <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">Document Distribution</h3>
-      <div className="mt-3 grid gap-4 lg:grid-cols-[1fr_220px]">
+    <section className={`${panelSurface} flex min-h-[340px] w-full flex-col lg:h-full`}>
+      <h3 className="shrink-0 text-sm font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
+        Document Distribution
+      </h3>
+      <div className="mt-3 grid shrink-0 gap-4 lg:grid-cols-[1fr_220px]">
         <MeasuredChartBlock mounted={mounted} className="h-48 w-full min-w-0" minWidth={260} minHeight={180}>
           {(w, h) => (
             <PieChart width={w} height={h}>
@@ -407,6 +422,7 @@ function DocumentsPieChart({ mounted }: { mounted: boolean }) {
           ))}
         </ul>
       </div>
+      <div className="min-h-0 flex-1" aria-hidden />
     </section>
   );
 }
@@ -439,9 +455,11 @@ function MeasuredChartBlock({
 
 function ActionsTimeline() {
   return (
-    <section className={`${panelSurface} min-h-[340px] w-full`}>
-      <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">Pending Actions Timeline</h3>
-      <ol className="mt-4 space-y-3">
+    <section className={`${panelSurface} flex min-h-[340px] w-full flex-col lg:h-full`}>
+      <h3 className="shrink-0 text-sm font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
+        Pending Actions Timeline
+      </h3>
+      <ol className="mt-4 min-h-0 flex-1 space-y-3 overflow-y-auto">
         {timeline.map((t, i) => (
           <li key={t.title} className="relative rounded-xl border border-white/[0.08] bg-[#0B0F19]/70 px-3 py-3 pl-10">
             <span className="absolute left-3 top-3.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-[#3B82F6]/25 text-[10px] text-[#93C5FD]">{i + 1}</span>

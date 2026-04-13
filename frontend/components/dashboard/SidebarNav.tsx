@@ -2,14 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Activity,
-  AudioLines,
-  FileText,
-  LayoutDashboard,
-  Radio,
-  Shield,
-} from "lucide-react";
+import { Activity, AudioLines, FileText, LayoutDashboard, Radio } from "lucide-react";
 import { useRole } from "@/components/rbac/RoleContext";
 import { APP_NAV_LINKS, type NavLinkKey } from "@/lib/nav-config";
 import { NAV_ACCESS, hasRole } from "@/lib/rbac";
@@ -20,7 +13,6 @@ const ICONS: Record<NavLinkKey, typeof LayoutDashboard> = {
   upload: AudioLines,
   documents: FileText,
   sessions: Activity,
-  admin: Shield,
 };
 
 /** Legacy sidebar rail (optional); dashboard shell now uses the top nav bar. */
@@ -29,7 +21,7 @@ export function SidebarNav() {
   const { role } = useRole();
 
   return (
-    <nav className="rounded-2xl border border-white/[0.08] bg-[#121826]/95 p-2 shadow-[0_18px_52px_-26px_rgba(245,158,11,0.25)]">
+    <nav className="vs-card-glow rounded-2xl border border-white/[0.08] bg-[#121826]/95 p-2">
       <p className="px-3 pb-2 pt-1 text-[10px] uppercase tracking-[0.2em] text-[#6B7280]">Workspace</p>
       {APP_NAV_LINKS.filter((item) => hasRole(role, NAV_ACCESS[item.key])).map((item) => {
         const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -38,6 +30,7 @@ export function SidebarNav() {
           <Link
             key={item.href}
             href={item.href}
+            prefetch={false}
             className={
               active
                 ? "mb-1 flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#3B82F6]/25 to-[#6366F1]/20 px-3 py-2.5 text-sm font-semibold text-[#F9FAFB]"

@@ -11,7 +11,7 @@ const geist = Geist({
 export const metadata: Metadata = {
   title: "CourtSense · VerbaSense",
   description: "Enterprise-grade court proceedings intelligence (demo)",
-  icons: [{ rel: "icon", url: "/favicon.svg" }],
+  // Favicon: `app/icon.png` (VerbaSense logo); Next.js serves optimized sizes
 };
 
 export default function RootLayout({

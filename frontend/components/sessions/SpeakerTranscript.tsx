@@ -17,8 +17,8 @@ export function SpeakerTranscript({
           id={`${idPrefix}-${line.id}`}
           className={
             condensed
-              ? "rounded-xl border border-white/[0.08] bg-[#0B0F19]/60 px-3 py-2"
-              : "rounded-2xl border border-white/[0.08] bg-[#0B0F19]/70 p-4"
+              ? "vs-card-glow rounded-xl border border-white/[0.08] bg-[#0B0F19]/60 px-3 py-2"
+              : "vs-card-glow rounded-2xl border border-white/[0.08] bg-[#0B0F19]/70 p-4"
           }
         >
           <div className="flex items-center justify-between gap-2">

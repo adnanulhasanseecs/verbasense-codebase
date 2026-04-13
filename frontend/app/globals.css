@@ -22,6 +22,8 @@
 
 html {
   scroll-behavior: smooth;
+  /* Avoid horizontal jump when route height toggles the vertical scrollbar (e.g. short Sessions vs tall Documents) */
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -39,8 +41,36 @@ body {
   position: relative;
 }
 
+/* Soft golden shadow glow for elevated surfaces (pair with rounded + border) */
+@layer components {
+  .vs-card-glow {
+    box-shadow:
+      0 18px 52px -26px rgba(245, 158, 11, 0.38),
+      0 10px 36px -18px rgba(0, 0, 0, 0.55);
+  }
+
+  /* Golden glow + subtle inset (use instead of shadow-inner, which overrides .vs-card-glow) */
+  .vs-card-glow-inset {
+    box-shadow:
+      inset 0 2px 10px rgba(0, 0, 0, 0.45),
+      0 18px 52px -26px rgba(245, 158, 11, 0.38),
+      0 10px 36px -18px rgba(0, 0, 0, 0.55);
+  }
+
+  /* Navbar logo mark — soft golden bloom + depth (avoid Tailwind ring/shadow on same node) */
+  .vs-logo-glow {
+    box-shadow:
+      0 14px 44px -14px rgba(245, 158, 11, 0.5),
+      0 8px 26px -10px rgba(245, 158, 11, 0.28),
+      0 6px 20px -8px rgba(0, 0, 0, 0.52);
+  }
+}
+
 .vs-card {
   background: linear-gradient(155deg, rgba(18, 24, 38, 0.95) 0%, rgba(11, 15, 25, 0.88) 100%);
+  box-shadow:
+    0 18px 52px -26px rgba(245, 158, 11, 0.38),
+    0 10px 36px -18px rgba(0, 0, 0, 0.55);
 }
 
 .vs-hero-gradient {
@@ -106,7 +136,9 @@ body {
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.09);
   background: linear-gradient(155deg, rgba(18, 24, 38, 0.95) 0%, rgba(11, 15, 25, 0.88) 100%);
-  box-shadow: 0 24px 70px -30px rgba(0, 0, 0, 0.85);
+  box-shadow:
+    0 18px 52px -26px rgba(245, 158, 11, 0.36),
+    0 24px 70px -30px rgba(0, 0, 0, 0.85);
   padding: 16px;
 }
 
@@ -123,16 +155,28 @@ body {
 }
 
 .demo-card--sky {
-  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.2), 0 24px 70px -30px rgba(0, 0, 0, 0.85);
+  box-shadow:
+    inset 0 0 0 1px rgba(56, 189, 248, 0.2),
+    0 18px 52px -26px rgba(245, 158, 11, 0.34),
+    0 24px 70px -30px rgba(0, 0, 0, 0.85);
 }
 .demo-card--violet {
-  box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.22), 0 24px 70px -30px rgba(0, 0, 0, 0.85);
+  box-shadow:
+    inset 0 0 0 1px rgba(167, 139, 250, 0.22),
+    0 18px 52px -26px rgba(245, 158, 11, 0.34),
+    0 24px 70px -30px rgba(0, 0, 0, 0.85);
 }
 .demo-card--cyan {
-  box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.22), 0 24px 70px -30px rgba(0, 0, 0, 0.85);
+  box-shadow:
+    inset 0 0 0 1px rgba(34, 211, 238, 0.22),
+    0 18px 52px -26px rgba(245, 158, 11, 0.34),
+    0 24px 70px -30px rgba(0, 0, 0, 0.85);
 }
 .demo-card--amber {
-  box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.24), 0 24px 70px -30px rgba(0, 0, 0, 0.85);
+  box-shadow:
+    inset 0 0 0 1px rgba(251, 191, 36, 0.24),
+    0 18px 52px -26px rgba(245, 158, 11, 0.38),
+    0 24px 70px -30px rgba(0, 0, 0, 0.85);
 }
 
 .demo-card__head {

@@ -74,7 +74,7 @@ export function ExportClient({ jobId }: { jobId: string }) {
           type="button"
           disabled={!out}
           onClick={() => download(`transcript-${jobId}.txt`, transcriptText, "text/plain")}
-          className="rounded-2xl border border-white/[0.08] bg-[#121826] px-5 py-4 text-left text-sm font-semibold text-[#E5E7EB] transition hover:bg-white/[0.04] disabled:opacity-40"
+          className="vs-card-glow rounded-2xl border border-white/[0.08] bg-[#121826] px-5 py-4 text-left text-sm font-semibold text-[#E5E7EB] transition hover:bg-white/[0.04] disabled:opacity-40"
         >
           Download transcript (.txt)
         </button>
@@ -82,7 +82,7 @@ export function ExportClient({ jobId }: { jobId: string }) {
           type="button"
           disabled={!out}
           onClick={() => download(`summary-${jobId}.txt`, out?.summary ?? "", "text/plain")}
-          className="rounded-2xl border border-white/[0.08] bg-[#121826] px-5 py-4 text-left text-sm font-semibold text-[#E5E7EB] transition hover:bg-white/[0.04] disabled:opacity-40"
+          className="vs-card-glow rounded-2xl border border-white/[0.08] bg-[#121826] px-5 py-4 text-left text-sm font-semibold text-[#E5E7EB] transition hover:bg-white/[0.04] disabled:opacity-40"
         >
           Download summary (.txt)
         </button>
@@ -90,7 +90,7 @@ export function ExportClient({ jobId }: { jobId: string }) {
           type="button"
           disabled={!out}
           onClick={() => download(`report-${jobId}.json`, report, "application/json")}
-          className="rounded-2xl border border-white/[0.08] bg-[#121826] px-5 py-4 text-left text-sm font-semibold text-[#E5E7EB] transition hover:bg-white/[0.04] disabled:opacity-40"
+          className="vs-card-glow rounded-2xl border border-white/[0.08] bg-[#121826] px-5 py-4 text-left text-sm font-semibold text-[#E5E7EB] transition hover:bg-white/[0.04] disabled:opacity-40"
         >
           Download structured report (.json)
         </button>

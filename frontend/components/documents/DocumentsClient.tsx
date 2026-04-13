@@ -23,7 +23,7 @@ export function DocumentsClient() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-3xl border border-white/[0.08] bg-[#121826]/80 p-5">
+      <section className="vs-card-glow rounded-3xl border border-white/[0.08] bg-[#121826]/80 p-5">
         <h1 className="text-2xl font-bold text-[#F9FAFB]">Document Intelligence</h1>
         <p className="mt-1 text-sm text-[#9CA3AF]">
           Upload legal PDFs and inspect extracted summary, entities, key points, and referenced

@@ -100,7 +100,7 @@ export function JobWorkspace({ jobId }: { jobId: string }) {
           {job ? <StatusBadge status={job.status} /> : null}
         </div>
 
-        <section className="rounded-2xl border border-white/[0.08] bg-[#121826] p-6 shadow-[0_18px_52px_-26px_rgba(245,158,11,0.42)]">
+        <section className="vs-card-glow rounded-2xl border border-white/[0.08] bg-[#121826] p-6">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-[#9CA3AF]">Pipeline</h2>
           <ol className="mt-4 space-y-3">
             {stages.map((stage, idx) => {
@@ -146,12 +146,12 @@ export function JobWorkspace({ jobId }: { jobId: string }) {
           ) : null}
         </section>
 
-        <section className="rounded-2xl border border-white/[0.08] bg-[#121826] p-6 shadow-[0_18px_52px_-26px_rgba(245,158,11,0.42)]">
+        <section className="vs-card-glow rounded-2xl border border-white/[0.08] bg-[#121826] p-6">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-[#9CA3AF]">Transcript</h2>
           {output ? (
             <div className="mt-4 space-y-4">
               {output.transcript.map((line, i) => (
-                <div key={i} className="rounded-2xl border border-white/[0.06] bg-[#0B0F19] p-4">
+                <div key={i} className="vs-card-glow rounded-2xl border border-white/[0.06] bg-[#0B0F19] p-4">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <span className="text-xs font-semibold uppercase tracking-wide text-[#22D3EE]">
                       {line.speaker}
@@ -179,12 +179,12 @@ export function JobWorkspace({ jobId }: { jobId: string }) {
       </div>
 
       <aside className="space-y-4">
-        <div className="rounded-2xl border border-white/[0.08] bg-[#121826] p-6 shadow-[0_18px_52px_-26px_rgba(245,158,11,0.42)]">
+        <div className="vs-card-glow rounded-2xl border border-white/[0.08] bg-[#121826] p-6">
           <h2 className="text-sm font-semibold text-[#9CA3AF]">{labels?.summary ?? "Summary"}</h2>
           <p className="mt-3 text-sm leading-relaxed text-[#E5E7EB]">{output?.summary ?? "-"}</p>
         </div>
 
-        <div className="rounded-2xl border border-white/[0.08] bg-[#121826] p-6 shadow-[0_18px_52px_-26px_rgba(245,158,11,0.42)]">
+        <div className="vs-card-glow rounded-2xl border border-white/[0.08] bg-[#121826] p-6">
           <h2 className="text-sm font-semibold text-[#9CA3AF]">{labels?.decisions ?? "Key decisions"}</h2>
           <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-[#E5E7EB]">
             {(output?.key_decisions ?? []).map((d) => (
@@ -194,11 +194,11 @@ export function JobWorkspace({ jobId }: { jobId: string }) {
           </ul>
         </div>
 
-        <div className="rounded-2xl border border-white/[0.08] bg-[#121826] p-6 shadow-[0_18px_52px_-26px_rgba(245,158,11,0.42)]">
+        <div className="vs-card-glow rounded-2xl border border-white/[0.08] bg-[#121826] p-6">
           <h2 className="text-sm font-semibold text-[#9CA3AF]">{labels?.actions ?? "Action items"}</h2>
           <ul className="mt-3 space-y-3">
             {(output?.actions ?? []).map((a, i) => (
-              <li key={i} className="rounded-2xl border border-white/[0.06] bg-[#0B0F19] p-3 text-sm">
+              <li key={i} className="vs-card-glow rounded-2xl border border-white/[0.06] bg-[#0B0F19] p-3 text-sm">
                 <p className="text-[#E5E7EB]">{a.text}</p>
                 <p className="mt-1 text-xs text-[#9CA3AF]">
                   {a.owner ?? "Unassigned"} - {a.priority ?? "-"}

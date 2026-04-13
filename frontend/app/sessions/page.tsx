@@ -11,10 +11,10 @@ export default function SessionsPage() {
 
   return (
     <AppShell>
-      <section className="space-y-4 rounded-3xl border border-white/[0.08] bg-[#121826]/80 p-6">
+      <section className="vs-card-glow space-y-4 rounded-3xl border border-white/[0.08] bg-[#121826]/80 p-6">
         <h1 className="text-2xl font-bold text-[#F9FAFB]">Sessions</h1>
         <p className="text-sm text-[#9CA3AF]">Browse recent hearings with transcript, intelligence, and documents.</p>
-        <ul className="divide-y divide-white/[0.06] rounded-2xl border border-white/[0.08] bg-[#0B0F19]/70">
+        <ul className="vs-card-glow divide-y divide-white/[0.06] rounded-2xl border border-white/[0.08] bg-[#0B0F19]/70">
           {sessions.map((s) => (
             <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm">
               <div>

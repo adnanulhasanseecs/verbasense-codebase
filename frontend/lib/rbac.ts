@@ -13,7 +13,6 @@ export const NAV_ACCESS = {
   upload: ["admin", "clerk"],
   documents: ["admin", "clerk", "judge"],
   sessions: ["admin", "judge", "viewer", "clerk"],
-  admin: ["admin"],
 } as const;
 
 export function hasRole(role: UserRole, allowed: readonly UserRole[]): boolean {

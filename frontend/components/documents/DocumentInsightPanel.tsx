@@ -50,7 +50,7 @@ export function DocumentInsightPanel({
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <article className="rounded-3xl border border-white/[0.08] bg-[#121826]/85 p-5 shadow-[0_18px_52px_-26px_rgba(245,158,11,0.42)]">
+    <article className="vs-card-glow rounded-3xl border border-white/[0.08] bg-[#121826]/85 p-5">
       <h3 className="text-sm font-semibold uppercase tracking-wide text-[#9CA3AF]">{title}</h3>
       <div className="mt-3 text-sm leading-relaxed text-[#E5E7EB]">{children}</div>
     </article>

@@ -12,7 +12,7 @@ export function DocumentUploadPanel({
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   return (
-    <section className="rounded-3xl border border-white/[0.08] bg-[#121826]/85 p-6 shadow-[0_18px_52px_-26px_rgba(245,158,11,0.42)]">
+    <section className="vs-card-glow rounded-3xl border border-white/[0.08] bg-[#121826]/85 p-6">
       <h2 className="text-sm font-semibold uppercase tracking-wide text-[#9CA3AF]">Document Viewer / Upload</h2>
       <div
         role="button"
@@ -30,7 +30,7 @@ export function DocumentUploadPanel({
           const file = e.dataTransfer.files?.[0];
           if (file) onUpload(file);
         }}
-        className="mt-4 flex min-h-[260px] cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-white/[0.14] bg-[#0B0F19]/80 p-6 text-center"
+        className="vs-card-glow mt-4 flex min-h-[260px] cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-white/[0.14] bg-[#0B0F19]/80 p-6 text-center"
       >
         <p className="text-sm font-semibold text-[#F9FAFB]">Drop PDF here or click to upload</p>
         <p className="mt-2 text-xs text-[#9CA3AF]">Document highlighting is mocked for demo.</p>

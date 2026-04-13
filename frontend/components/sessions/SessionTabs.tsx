@@ -16,7 +16,7 @@ export function SessionTabs({
   onChange: (tab: SessionTab) => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-white/[0.08] bg-[#121826]/70 p-2">
+    <div className="vs-card-glow flex flex-wrap items-center gap-2 rounded-2xl border border-white/[0.08] bg-[#121826]/70 p-2">
       {tabs.map((t) => {
         const isActive = active === t.id;
         return (

@@ -33,7 +33,7 @@ export function LiveSessionClient() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-3xl border border-white/[0.08] bg-[#121826]/80 p-5">
+      <section className="vs-card-glow rounded-3xl border border-white/[0.08] bg-[#121826]/80 p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-1">
             <p className="text-xs uppercase tracking-[0.2em] text-[#22D3EE]">Live Session</p>
@@ -61,13 +61,13 @@ export function LiveSessionClient() {
         <LiveIntelligencePanel lines={lines} />
       </div>
 
-      <section className="rounded-3xl border border-white/[0.08] bg-[#121826]/80 p-5">
+      <section className="vs-card-glow rounded-3xl border border-white/[0.08] bg-[#121826]/80 p-5">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-[#9CA3AF]">
           Documents presented during session
         </h2>
         <div className="mt-3 grid gap-3 md:grid-cols-2">
           {presentedDocs.map((doc) => (
-            <article key={doc.id} className="rounded-2xl border border-white/[0.08] bg-[#0B0F19]/70 p-4">
+            <article key={doc.id} className="vs-card-glow rounded-2xl border border-white/[0.08] bg-[#0B0F19]/70 p-4">
               <p className="font-semibold text-[#E5E7EB]">{doc.name}</p>
               <p className="mt-1 text-sm text-[#9CA3AF]">{doc.summary}</p>
             </article>

@@ -9,7 +9,7 @@ function statusClass(status: SessionRow["status"]) {
 
 export function DocumentsPanel() {
   return (
-    <section className="rounded-2xl border border-white/[0.08] bg-[#121826]/92 p-5 shadow-[0_18px_52px_-26px_rgba(245,158,11,0.38)]">
+    <section className="vs-card-glow rounded-2xl border border-white/[0.08] bg-[#121826]/92 p-5">
       <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">Document Intelligence</h3>
       <ul className="mt-3 space-y-2">
         {DOCUMENTS.map((doc) => (
