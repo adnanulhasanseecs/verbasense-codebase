@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from time import monotonic
 from uuid import UUID, uuid4
 
+from app.api.exceptions import AppError
+from app.asr.runtime import transcribe_for_job
 from app.config.settings import Settings, get_settings
 from app.core.pipeline import should_fail_job
 from app.db.repository import JobRepository, PersistedJob
@@ -17,6 +19,7 @@ from app.schemas.domain_config import DomainConfigPayload
 from app.schemas.job import JobError, JobResponse, JobStatus
 from app.schemas.output import OutputSchema
 from app.schemas.upload import UploadMetadata
+from app.services.account_ai import load_account_ai_overlay
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +40,7 @@ class JobRecord:
 class QueueItem:
     job_id: UUID
     domain_cfg: DomainConfigPayload
+    account_id: str | None
     force_failure: bool
     attempt: int
 
@@ -53,12 +57,15 @@ class JobService:
         self._worker_tasks: list[asyncio.Task[None]] = []
         self._workers_started = False
         self._last_retention_run = 0.0
+        self._audio_inputs: dict[UUID, bytes] = {}
 
     async def create_job(
         self,
         domain_cfg: DomainConfigPayload,
         metadata: UploadMetadata,
+        audio_bytes: bytes,
         force_failure: bool,
+        account_id: str | None = None,
         idempotency_key: str | None = None,
     ) -> JobRecord:
         await self._ensure_workers()
@@ -77,10 +84,18 @@ class JobService:
             domain=domain_cfg.id,
             metadata=metadata,
             max_retries=self._settings.job_max_retries,
+            account_id=account_id,
             idempotency_key=idempotency_key,
         )
+        self._audio_inputs[job_id] = audio_bytes
         await self._queue.put(
-            QueueItem(job_id=job_id, domain_cfg=domain_cfg, force_failure=force_failure, attempt=0)
+            QueueItem(
+                job_id=job_id,
+                domain_cfg=domain_cfg,
+                account_id=account_id,
+                force_failure=force_failure,
+                attempt=0,
+            )
         )
         logger.info("job.created", extra={"job_id": str(job_id), "domain": domain_cfg.id})
         return _to_record(persisted)
@@ -96,6 +111,7 @@ class JobService:
         job_id: UUID,
         domain_cfg: DomainConfigPayload,
         force_failure: bool,
+        account_id: str | None,
     ) -> None:
         delay_ms = max(0, self._settings.mock_delay_ms)
         stages = domain_cfg.pipeline.stages or ["processing"]
@@ -126,17 +142,32 @@ class JobService:
             )
             await asyncio.sleep(delay_ms / 1000.0)
 
+        audio_bytes = self._audio_inputs.get(job_id, b"")
+        overlay = load_account_ai_overlay(self._settings, account_id)
+        transcript = transcribe_for_job(
+            settings=self._settings,
+            overlay=overlay,
+            job_id=job_id,
+            audio_bytes=audio_bytes,
+            metadata=current.metadata,
+            domain_cfg=domain_cfg,
+        )
         result = self._provider.generate_output(
             job_id=job_id,
             domain_cfg=domain_cfg,
             metadata=current.metadata,
+            flow="transcription_intelligence",
+            transcript=transcript,
+            account_overlay=overlay,
         )
+        output_payload = dict(result.output)
+        output_payload["transcript"] = [segment.model_dump(mode="json") for segment in transcript]
         self._repo.update(
             job_id,
             status=JobStatus.completed,
             stage=stages[-1],
             progress=100,
-            output=OutputSchema.model_validate(result.output),
+            output=OutputSchema.model_validate(output_payload),
             error=None,
             telemetry={
                 "provider": result.provider,
@@ -158,7 +189,26 @@ class JobService:
         while True:
             item = await self._queue.get()
             try:
-                await self._run_pipeline(item.job_id, item.domain_cfg, item.force_failure)
+                await self._run_pipeline(
+                    item.job_id,
+                    item.domain_cfg,
+                    item.force_failure,
+                    item.account_id,
+                )
+            except AppError as err:
+                logger.warning(
+                    "job.failed_client_error",
+                    extra={
+                        "job_id": str(item.job_id),
+                        "code": err.code,
+                        "message": err.message,
+                    },
+                )
+                self._repo.update(
+                    item.job_id,
+                    status=JobStatus.failed,
+                    error=JobError(code=err.code, message=err.message),
+                )
             except Exception as e:  # noqa: BLE001
                 logger.exception(
                     "job.worker_exception",
@@ -179,6 +229,7 @@ class JobService:
                         QueueItem(
                             job_id=item.job_id,
                             domain_cfg=item.domain_cfg,
+                            account_id=item.account_id,
                             force_failure=item.force_failure,
                             attempt=item.attempt + 1,
                         )
@@ -194,6 +245,9 @@ class JobService:
                         ),
                     )
             finally:
+                record = self._repo.get(item.job_id)
+                if record is not None and record.status in (JobStatus.completed, JobStatus.failed):
+                    self._audio_inputs.pop(item.job_id, None)
                 self._queue.task_done()
 
     async def _maybe_run_retention(self) -> None:

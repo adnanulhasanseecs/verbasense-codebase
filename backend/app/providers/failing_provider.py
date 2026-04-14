@@ -6,6 +6,7 @@ from uuid import UUID
 
 from app.providers.types import ProviderConfig, RawProviderResult
 from app.schemas.domain_config import DomainConfigPayload
+from app.schemas.output import TranscriptSegment
 from app.schemas.upload import UploadMetadata
 
 
@@ -17,7 +18,8 @@ class FailingOutputProvider:
         domain_cfg: DomainConfigPayload,
         metadata: UploadMetadata,
         config: ProviderConfig,
+        transcript: list[TranscriptSegment] | None = None,
     ) -> RawProviderResult:
-        _ = (job_id, domain_cfg, metadata, config)
+        _ = (job_id, domain_cfg, metadata, config, transcript)
         msg = "Simulated provider failure"
         raise RuntimeError(msg)

@@ -64,6 +64,67 @@ export const MOCK_SESSION = {
   ],
 };
 
+export type SessionRecord = {
+  id: string;
+  name: string;
+  judge: string;
+  dateLabel: string;
+  status: "processed" | "processing";
+  transcript: TranscriptLine[];
+  intelligence: {
+    summary: string;
+    decisions: string[];
+    actions: string[];
+  };
+  documents: { id: string; name: string; summary: string }[];
+};
+
+export const MOCK_SESSIONS: SessionRecord[] = [
+  {
+    id: "SES-2026-1042",
+    name: "Hon. Avery Cole - 2026-04-06",
+    judge: "Hon. Avery Cole",
+    dateLabel: "2026-04-06 10:42",
+    status: "processed",
+    transcript: MOCK_SESSION.transcript,
+    intelligence: MOCK_SESSION.intelligence,
+    documents: MOCK_SESSION.documents,
+  },
+  {
+    id: "SES-2026-1039",
+    name: "Hon. Rina Matthews - 2026-04-05",
+    judge: "Hon. Rina Matthews",
+    dateLabel: "2026-04-05 16:12",
+    status: "processed",
+    transcript: [
+      { id: "1", speaker: "Judge", text: "Proceed with witness statements.", timestamp: "16:12:14" },
+      { id: "2", speaker: "Counsel", text: "Submitting timeline addendum.", timestamp: "16:13:05" },
+    ],
+    intelligence: {
+      summary: "Witness sequence was recorded and a timeline addendum was submitted.",
+      decisions: ["Witness order approved", "Timeline addendum accepted"],
+      actions: ["Clerk to circulate notes", "Counsel to upload signed annex"],
+    },
+    documents: [{ id: "DOC-31", name: "Timeline Addendum.pdf", summary: "Updated chronology." }],
+  },
+  {
+    id: "SES-2026-1043",
+    name: "Hon. Diego Marin - 2026-04-06",
+    judge: "Hon. Diego Marin",
+    dateLabel: "2026-04-06 11:05",
+    status: "processing",
+    transcript: [
+      { id: "1", speaker: "Judge", text: "Hearing resumed for procedural updates.", timestamp: "11:05:20" },
+    ],
+    intelligence: {
+      summary: "Session is in process. Intelligence updates will appear when processing completes.",
+      decisions: [],
+      actions: [],
+    },
+    documents: [],
+  },
+];
+
 export function mockDocumentInsight(fileName: string): DocumentInsight {
   return {
     summary: `Document ${fileName} reviewed. The filing references a procedural continuance and admissibility of evidence.`,

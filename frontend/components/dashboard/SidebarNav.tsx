@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, AudioLines, FileText, LayoutDashboard, Radio } from "lucide-react";
+import { Activity, AudioLines, FileText, LayoutDashboard, Radio, Shield } from "lucide-react";
 import { useRole } from "@/components/rbac/RoleContext";
 import { APP_NAV_LINKS, type NavLinkKey } from "@/lib/nav-config";
 import { NAV_ACCESS, hasRole } from "@/lib/rbac";
@@ -13,6 +13,7 @@ const ICONS: Record<NavLinkKey, typeof LayoutDashboard> = {
   upload: AudioLines,
   documents: FileText,
   sessions: Activity,
+  admin: Shield,
 };
 
 /** Legacy sidebar rail (optional); dashboard shell now uses the top nav bar. */

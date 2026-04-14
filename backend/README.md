@@ -24,6 +24,13 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 | `OUTPUT_TIMEOUT_SECONDS` | Provider timeout budget (default `30`) |
 | `OUTPUT_TEMPERATURE` | Provider temperature hint (default `0.2`) |
 | `OUTPUT_MAX_TOKENS` | Provider token cap hint (default `2048`) |
+| `SECRET_ENCRYPTION_KEY` | Fernet key for encrypting provider credentials at rest in account config |
+| `RATE_LIMIT_WINDOW_SECONDS` | Fixed-window duration for API throttling (default `60`) |
+| `RATE_LIMIT_AUTH_PER_WINDOW` | Max auth requests/client/window (default `120`) |
+| `RATE_LIMIT_ADMIN_PER_WINDOW` | Max admin requests/client/window (default `60`) |
+| `RATE_LIMIT_AI_PER_WINDOW` | Max AI-heavy requests/client/window (default `30`) |
+| `OBSERVABILITY_METRICS_ENABLED` | Enable in-process metrics tracking for `/api/v1/ops/metrics` |
+| `EVAL_MODE_ENABLED` | Enable evaluation tooling mode in non-production environments |
 | `MOCK_DELAY` | Per-stage delay in ms (default 400) |
 | `MOCK_FAILURE_RATE` | 0–1 probability bucket for simulated failures |
 | `CORS_ORIGINS` | Comma-separated allowed origins |
@@ -48,3 +55,14 @@ alembic revision -m "describe change"
 
 `POST /api/v1/upload` accepts optional `X-Idempotency-Key`.  
 When repeated with the same key, API returns the existing job instead of creating duplicates.
+
+## Ops endpoints
+
+- `GET /api/v1/ops/metrics` (admin): request counters + AI latency p95 snapshot for SLO monitoring
+
+## C5/C6 runbooks and eval assets
+
+- Backup/restore + DR runbook: `docs/ops/backup-restore-runbook.md`
+- Release checklist: `docs/ops/release-checklist.md`
+- Golden evaluation set: `docs/evals/golden_document_eval.jsonl`
+- Golden eval script: `backend/scripts/eval_document_golden.py`

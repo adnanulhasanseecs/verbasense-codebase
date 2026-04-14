@@ -84,7 +84,7 @@ start_frontend() {
   rm -f "$FRONTEND_PID"
   cd "$ROOT/frontend"
   export NEXT_PUBLIC_API_URL="http://localhost:$BACKEND_PORT"
-  nohup npx next dev -p "$FRONTEND_PORT" \
+  nohup npx next dev -p "$FRONTEND_PORT" --turbo \
     >"$FRONTEND_LOG" 2>&1 &
   echo $! >"$FRONTEND_PID"
   echo "Frontend started PID $(cat "$FRONTEND_PID") — http://localhost:$FRONTEND_PORT"

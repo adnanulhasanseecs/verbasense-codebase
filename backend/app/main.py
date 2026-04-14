@@ -18,9 +18,13 @@ from starlette.responses import Response
 from app.api.exceptions import AppError
 from app.api.v1.router import router as v1_router
 from app.config.loader import load_domain_configs
-from app.config.settings import get_settings
+from app.config.settings import Settings, get_settings
 from app.db import dispose_engine, init_db
 from app.schemas.errors import ErrorResponse
+from app.security.redaction import redact
+from app.services.auth_service import get_auth_service
+from app.services.observability import now_ms, record_request
+from app.services.rate_limit import RateLimiter
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -30,6 +34,7 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
     init_db(settings)
+    get_auth_service(settings).ensure_seed_data()
     app.state.domains = load_domain_configs(settings)
     logger.info("startup.complete domains=%s", sorted(app.state.domains.ids()))
     yield
@@ -40,6 +45,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(title="VerbaSense API", version="0.1.0", lifespan=lifespan)
 
 _settings = get_settings()
+_rate_limiter = RateLimiter(_settings)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_settings.cors_origin_list,
@@ -63,9 +69,24 @@ async def request_id_middleware(
     request: Request,
     call_next: Callable[[Request], Awaitable[Response]],
 ) -> Response:
+    started_ms = now_ms()
     rid = _parse_request_id(request.headers.get("X-Request-ID"))
     request.state.request_id = rid
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.lower().startswith("bearer "):
+        token = auth_header.split(" ", 1)[1].strip()
+        if token:
+            ctx = get_auth_service(get_settings()).get_context_from_token(token)
+            if ctx is not None:
+                request.state.session_user = ctx.user
+                request.state.session_token = token
+    limited = _rate_limit_response_if_needed(request, _settings, rid)
+    if limited is not None:
+        return limited
     response = await call_next(request)
+    elapsed_ms = max(0, now_ms() - started_ms)
+    if _settings.observability_metrics_enabled:
+        record_request(request.url.path, response.status_code, elapsed_ms)
     response.headers["X-Request-ID"] = str(rid)
     return response
 
@@ -79,9 +100,36 @@ def _error_body(
     return ErrorResponse(
         code=code,
         message=message,
-        details=details,
+        details=redact(details),
         request_id=request_id,
     ).model_dump(mode="json")
+
+
+def _rate_limit_response_if_needed(
+    request: Request, settings: Settings, request_id: UUID
+) -> JSONResponse | None:
+    path = request.url.path
+    bucket = ""
+    if path.startswith("/api/v1/auth/"):
+        bucket = "auth"
+    elif path.startswith("/api/v1/admin/"):
+        bucket = "admin"
+    elif path.startswith("/api/v1/upload") or path.startswith("/api/v1/documents/"):
+        bucket = "ai"
+    if not bucket:
+        return None
+    client = request.client.host if request.client else "unknown"
+    if not _rate_limiter.allow(client, bucket=bucket):
+        return JSONResponse(
+            status_code=429,
+            content=_error_body(
+                "rate_limited",
+                "Too many requests; retry after rate limit window.",
+                {"bucket": bucket, "window_seconds": settings.rate_limit_window_seconds},
+                request_id,
+            ),
+        )
+    return None
 
 
 @app.exception_handler(AppError)

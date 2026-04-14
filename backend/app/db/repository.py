@@ -17,6 +17,7 @@ from app.schemas.upload import UploadMetadata
 @dataclass
 class PersistedJob:
     job_id: UUID
+    account_id: str | None
     domain: str
     metadata: UploadMetadata
     status: JobStatus
@@ -46,10 +47,12 @@ class JobRepository:
         metadata: UploadMetadata,
         *,
         max_retries: int,
+        account_id: str | None = None,
         idempotency_key: str | None = None,
     ) -> PersistedJob:
         model = JobModel(
             id=str(job_id),
+            account_id=account_id,
             domain=domain,
             status=JobStatus.queued.value,
             stage="",
@@ -66,7 +69,7 @@ class JobRepository:
                 JobEventModel(
                     job_id=str(job_id),
                     event_type="job_created",
-                    payload={"domain": domain},
+                    payload={"domain": domain, "account_id": account_id},
                 )
             )
             session.commit()
@@ -194,6 +197,7 @@ def _to_persisted(model: JobModel) -> PersistedJob:
 
     return PersistedJob(
         job_id=UUID(model.id),
+        account_id=model.account_id,
         domain=model.domain,
         metadata=UploadMetadata.model_validate(model.upload_metadata or {}),
         status=JobStatus(model.status),

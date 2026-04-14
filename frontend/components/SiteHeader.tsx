@@ -23,7 +23,7 @@ export function SiteHeader() {
               VerbaSense
             </span>
             <span className="text-sm font-semibold tracking-tight text-[#F9FAFB]">
-              CourtSense <span className="font-normal text-[#9CA3AF]">- Enterprise demo</span>
+              CourtSense <span className="font-normal text-[#9CA3AF]">- Enterprise</span>
             </span>
           </span>
         </Link>

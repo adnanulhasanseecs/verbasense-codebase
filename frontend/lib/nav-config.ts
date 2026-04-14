@@ -1,4 +1,4 @@
-export type NavLinkKey = "dashboard" | "live" | "upload" | "documents" | "sessions";
+export type NavLinkKey = "dashboard" | "live" | "upload" | "documents" | "sessions" | "admin";
 
 export const APP_NAV_LINKS: ReadonlyArray<{
   href: string;
@@ -10,6 +10,7 @@ export const APP_NAV_LINKS: ReadonlyArray<{
   { href: "/transcribe", label: "Transcribe", key: "upload" },
   { href: "/documents", label: "Documents", key: "documents" },
   { href: "/sessions", label: "Sessions", key: "sessions" },
+  { href: "/admin/users", label: "Admin", key: "admin" },
 ];
 
 export type NavLinkItem = (typeof APP_NAV_LINKS)[number];

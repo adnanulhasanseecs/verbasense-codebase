@@ -84,6 +84,16 @@ class Settings(BaseSettings):
         alias="OUTPUT_MODEL_BY_DOMAIN_JSON",
         description="Optional JSON map: domain_id -> model override.",
     )
+    output_base_url: str = Field(
+        default="https://api.openai.com/v1",
+        alias="OUTPUT_BASE_URL",
+        description="Base URL for OpenAI-compatible transcription-intelligence model calls.",
+    )
+    output_api_key: str = Field(
+        default="",
+        alias="OUTPUT_API_KEY",
+        description="API key for transcription-intelligence provider calls.",
+    )
     output_timeout_seconds: int = Field(
         default=30,
         ge=1,
@@ -102,6 +112,81 @@ class Settings(BaseSettings):
         ge=1,
         alias="OUTPUT_MAX_TOKENS",
         description="Maximum generated tokens for compatible providers.",
+    )
+    asr_provider: str = Field(
+        default="mock",
+        alias="ASR_PROVIDER",
+        description="ASR provider key (mock, openai, self-hosted-whisper).",
+    )
+    asr_model: str = Field(
+        default="whisper-1",
+        alias="ASR_MODEL",
+        description="ASR model ID (e.g. whisper-1 or whisper-large-v3).",
+    )
+    asr_base_url: str = Field(
+        default="https://api.openai.com/v1",
+        alias="ASR_BASE_URL",
+        description="ASR API base URL for OpenAI-compatible transcription endpoint.",
+    )
+    asr_api_key: str = Field(
+        default="",
+        alias="ASR_API_KEY",
+        description="ASR API key/token for cloud or self-hosted gateway.",
+    )
+    asr_timeout_seconds: int = Field(
+        default=45,
+        ge=1,
+        alias="ASR_TIMEOUT_SECONDS",
+        description="Timeout for ASR transcription requests.",
+    )
+    transcription_intelligence_model: str = Field(
+        default="mock-v1",
+        alias="TRANSCRIPTION_INTELLIGENCE_MODEL",
+        description="Model ID used to generate summary/actions/entities from ASR transcript.",
+    )
+    strict_real_providers: bool = Field(
+        default=False,
+        alias="STRICT_REAL_PROVIDERS",
+        description="Disable mock/demo providers for document processing when enabled.",
+    )
+    secret_encryption_key: str = Field(
+        default="",
+        alias="SECRET_ENCRYPTION_KEY",
+        description="Fernet key for encrypting stored provider credentials at rest.",
+    )
+    rate_limit_window_seconds: int = Field(
+        default=60,
+        ge=1,
+        alias="RATE_LIMIT_WINDOW_SECONDS",
+        description="Window size for in-memory API rate limits.",
+    )
+    rate_limit_auth_per_window: int = Field(
+        default=120,
+        ge=1,
+        alias="RATE_LIMIT_AUTH_PER_WINDOW",
+        description="Max auth requests per client per window.",
+    )
+    rate_limit_admin_per_window: int = Field(
+        default=60,
+        ge=1,
+        alias="RATE_LIMIT_ADMIN_PER_WINDOW",
+        description="Max admin requests per client per window.",
+    )
+    rate_limit_ai_per_window: int = Field(
+        default=30,
+        ge=1,
+        alias="RATE_LIMIT_AI_PER_WINDOW",
+        description="Max high-cost AI requests per client per window.",
+    )
+    observability_metrics_enabled: bool = Field(
+        default=True,
+        alias="OBSERVABILITY_METRICS_ENABLED",
+        description="Enable lightweight in-process metrics collection.",
+    )
+    eval_mode_enabled: bool = Field(
+        default=False,
+        alias="EVAL_MODE_ENABLED",
+        description="Enable evaluation endpoints and golden-set tooling in non-prod.",
     )
 
     @property

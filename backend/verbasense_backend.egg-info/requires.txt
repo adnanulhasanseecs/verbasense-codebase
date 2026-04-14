@@ -4,6 +4,7 @@ pydantic==2.12.5
 pydantic-settings==2.13.1
 python-multipart==0.0.22
 PyYAML==6.0.3
+SQLAlchemy==2.0.44
 
 [dev]
 pytest==9.0.2

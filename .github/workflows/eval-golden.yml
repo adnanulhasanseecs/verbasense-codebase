@@ -1,0 +1,26 @@
+﻿name: eval-golden
+
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - 'docs/evals/**'
+      - '.github/workflows/eval-golden.yml'
+
+jobs:
+  eval-golden:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+      - name: Run golden eval gate
+        run: python scripts/eval_document_golden.py

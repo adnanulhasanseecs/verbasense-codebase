@@ -6,6 +6,7 @@ from uuid import UUID
 
 from app.providers.types import ProviderConfig, RawProviderResult
 from app.schemas.domain_config import DomainConfigPayload
+from app.schemas.output import TranscriptSegment
 from app.schemas.upload import UploadMetadata
 
 
@@ -17,6 +18,7 @@ class InvalidOutputProvider:
         domain_cfg: DomainConfigPayload,
         metadata: UploadMetadata,
         config: ProviderConfig,
+        transcript: list[TranscriptSegment] | None = None,
     ) -> RawProviderResult:
-        _ = (job_id, domain_cfg, metadata, config)
+        _ = (job_id, domain_cfg, metadata, config, transcript)
         return RawProviderResult(payload={"unexpected": True}, token_usage_estimate=1)

@@ -7,6 +7,7 @@ from typing import Any, Protocol
 from uuid import UUID
 
 from app.schemas.domain_config import DomainConfigPayload
+from app.schemas.output import TranscriptSegment
 from app.schemas.upload import UploadMetadata
 
 
@@ -19,6 +20,8 @@ class ProviderConfig:
     max_tokens: int
     domain_id: str
     flow: str
+    llm_base_url: str | None = None
+    llm_api_key: str | None = None
 
 
 @dataclass(frozen=True)
@@ -46,4 +49,5 @@ class OutputProvider(Protocol):
         domain_cfg: DomainConfigPayload,
         metadata: UploadMetadata,
         config: ProviderConfig,
+        transcript: list[TranscriptSegment] | None = None,
     ) -> RawProviderResult: ...

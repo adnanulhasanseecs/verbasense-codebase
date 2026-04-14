@@ -3,36 +3,44 @@
 import { useMemo, useState } from "react";
 import { SessionTabs, type SessionTab } from "@/components/sessions/SessionTabs";
 import { SpeakerTranscript } from "@/components/sessions/SpeakerTranscript";
-import { MOCK_SESSION } from "@/lib/mock-data";
+import type { SessionRecord } from "@/lib/mock-data";
 import { exportTranscriptDocx, exportTranscriptPdf } from "@/lib/transcript-export";
 
-export function SessionViewer({ id }: { id: string }) {
+export function SessionViewer({ session }: { session: SessionRecord }) {
   const [tab, setTab] = useState<SessionTab>("transcript");
   const [condensed, setCondensed] = useState(true);
 
-  const lines = useMemo(() => MOCK_SESSION.transcript, []);
+  const lines = useMemo(() => session.transcript, [session.transcript]);
+  const intelligenceForExport = useMemo(
+    () => ({
+      summary: session.intelligence.summary,
+      key_decisions: session.intelligence.decisions,
+      actions: session.intelligence.actions.map((text) => ({ text })),
+    }),
+    [session.intelligence],
+  );
 
   return (
     <div className="vs-card-glow space-y-5 rounded-3xl border border-white/[0.08] bg-[#121826]/80 p-6">
       <header className="space-y-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#F9FAFB]">Session {id}</h1>
+          <h1 className="text-2xl font-bold text-[#F9FAFB]">{session.name}</h1>
           <p className="text-sm text-[#9CA3AF]">Transcript + intelligence + documents</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => exportTranscriptDocx(lines, id)}
+            onClick={() => exportTranscriptDocx(lines, session.id, intelligenceForExport)}
             className="rounded-xl border border-white/[0.12] bg-[#0B0F19] px-3 py-2 text-xs font-semibold text-[#E5E7EB] hover:bg-white/[0.05]"
           >
-            Download .docx
+            Download transcript + intelligence (.docx)
           </button>
           <button
             type="button"
-            onClick={() => exportTranscriptPdf(lines, id)}
+            onClick={() => exportTranscriptPdf(lines, session.id, intelligenceForExport)}
             className="rounded-xl border border-white/[0.12] bg-[#0B0F19] px-3 py-2 text-xs font-semibold text-[#E5E7EB] hover:bg-white/[0.05]"
           >
-            Download .pdf
+            Download transcript + intelligence (.pdf)
           </button>
         </div>
       </header>
@@ -86,17 +94,17 @@ export function SessionViewer({ id }: { id: string }) {
 
       {tab === "intelligence" ? (
         <div className="grid gap-4 md:grid-cols-3">
-          <Card title="Summary">{MOCK_SESSION.intelligence.summary}</Card>
+          <Card title="Summary">{session.intelligence.summary}</Card>
           <Card title="Decisions">
             <ul className="list-disc space-y-1 pl-5">
-              {MOCK_SESSION.intelligence.decisions.map((d) => (
+              {session.intelligence.decisions.map((d) => (
                 <li key={d}>{d}</li>
               ))}
             </ul>
           </Card>
           <Card title="Actions">
             <ul className="list-disc space-y-1 pl-5">
-              {MOCK_SESSION.intelligence.actions.map((a) => (
+              {session.intelligence.actions.map((a) => (
                 <li key={a}>{a}</li>
               ))}
             </ul>
@@ -106,7 +114,7 @@ export function SessionViewer({ id }: { id: string }) {
 
       {tab === "documents" ? (
         <div className="space-y-3">
-          {MOCK_SESSION.documents.map((d) => (
+          {session.documents.map((d) => (
             <article key={d.id} className="vs-card-glow rounded-2xl border border-white/[0.08] bg-[#0B0F19]/70 p-4">
               <p className="font-semibold text-[#E5E7EB]">{d.name}</p>
               <p className="mt-1 text-sm text-[#9CA3AF]">{d.summary}</p>

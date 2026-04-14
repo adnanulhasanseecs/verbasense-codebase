@@ -1,0 +1,2 @@
+﻿{"flow":"document_processing","input":"docs/sample-docs/01-motion-for-continuance.pdf","expected":{"summary_keywords":["continuance","deadline"],"entity_case_id":"CR-2026-118","min_key_points":2}}
+{"flow":"document_processing","input":"docs/sample-docs/04-hearing-minutes-procedural-order.pdf","expected":{"summary_keywords":["hearing","order"],"entity_case_id":"SES-2026-1042","min_key_points":2}}
