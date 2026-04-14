@@ -105,43 +105,39 @@ export function DashboardLayout() {
   }, []);
 
   return (
-    <div className="w-full space-y-6">
-      <section className="vs-card-glow w-full rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#0F172A] via-[#111A2D] to-[#0B0F19] p-6 backdrop-blur-md">
-        <p className="text-xs uppercase tracking-[0.16em] text-[#9CA3AF]">CourtSense Command Center</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#F9FAFB]">
-          Operational Dashboard
-        </h1>
-      </section>
+    <div className="flex-1 min-w-0">
+      <div className="grid grid-cols-12 gap-6 p-6">
+        <section className="vs-card-glow col-span-12 w-full rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#0F172A] via-[#111A2D] to-[#0B0F19] p-6 backdrop-blur-md">
+          <p className="text-xs uppercase tracking-[0.16em] text-[#9CA3AF]">CourtSense Command Center</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#F9FAFB]">
+            Operational Dashboard
+          </h1>
+        </section>
 
-      <div className="grid w-full grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
         {kpis.map((kpi) => (
-          <KPICardWithTrend key={kpi.title} mounted={mounted} {...kpi} />
+          <div key={kpi.title} className="col-span-12 min-w-0 md:col-span-6 lg:col-span-3">
+            <KPICardWithTrend mounted={mounted} {...kpi} />
+          </div>
         ))}
-      </div>
 
-      <div className="grid w-full grid-cols-1 items-stretch gap-6 lg:grid-cols-12">
-        <div className="flex h-full min-h-0 min-w-0 lg:col-span-8">
+        <div className="col-span-12 min-w-0 lg:col-span-8">
           <LiveSessionPanel />
         </div>
-        <div className="flex h-full min-h-0 min-w-0 lg:col-span-4">
+        <div className="col-span-12 min-w-0 lg:col-span-4">
           <ActivityChart mounted={mounted} />
         </div>
-      </div>
 
-      <div className="grid w-full grid-cols-1 items-stretch gap-6 lg:grid-cols-12">
-        <div className="flex h-full min-h-0 min-w-0 lg:col-span-8">
+        <div className="col-span-12 min-w-0 lg:col-span-8">
           <SessionsAnalyticsChart mounted={mounted} />
         </div>
-        <div className="flex h-full min-h-0 min-w-0 lg:col-span-4">
+        <div className="col-span-12 min-w-0 lg:col-span-4">
           <IntelligencePanel role={role} />
         </div>
-      </div>
 
-      <div className="grid w-full grid-cols-1 items-stretch gap-6 lg:grid-cols-12">
-        <div className="flex h-full min-h-0 min-w-0 lg:col-span-6">
+        <div className="col-span-12 min-w-0 lg:col-span-6">
           <DocumentsPieChart mounted={mounted} />
         </div>
-        <div className="flex h-full min-h-0 min-w-0 lg:col-span-6">
+        <div className="col-span-12 min-w-0 lg:col-span-6">
           <ActionsTimeline />
         </div>
       </div>
