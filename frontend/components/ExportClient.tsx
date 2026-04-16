@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import type { OutputSchema } from "@/lib/api";
-import { getJob, getResult } from "@/lib/api";
+import { getJob, getResult } from "@/lib/api/jobs";
+import type { OutputSchema } from "@/lib/api/types";
 
 export function ExportClient({ jobId }: { jobId: string }) {
   const [out, setOut] = useState<OutputSchema | null>(null);

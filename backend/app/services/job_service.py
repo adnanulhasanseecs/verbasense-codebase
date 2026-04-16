@@ -20,6 +20,7 @@ from app.schemas.job import JobError, JobResponse, JobStatus
 from app.schemas.output import OutputSchema
 from app.schemas.upload import UploadMetadata
 from app.services.account_ai import load_account_ai_overlay
+from app.services.audio_artifacts import save_audio_artifact
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +68,8 @@ class JobService:
         force_failure: bool,
         account_id: str | None = None,
         idempotency_key: str | None = None,
+        content_type: str = "application/octet-stream",
+        filename: str | None = None,
     ) -> JobRecord:
         await self._ensure_workers()
         await self._maybe_run_retention()
@@ -88,6 +91,15 @@ class JobService:
             idempotency_key=idempotency_key,
         )
         self._audio_inputs[job_id] = audio_bytes
+        save_audio_artifact(
+            settings=self._settings,
+            audio_bytes=audio_bytes,
+            source_type="upload",
+            account_id=account_id,
+            job_id=job_id,
+            mime_type=content_type,
+            original_filename=filename,
+        )
         await self._queue.put(
             QueueItem(
                 job_id=job_id,

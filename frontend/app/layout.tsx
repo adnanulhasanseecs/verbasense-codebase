@@ -1,6 +1,6 @@
 ﻿import type { Metadata } from "next";
 import { Geist } from "next/font/google";
-import { RoleProvider } from "@/components/rbac/RoleContext";
+import { AppProviders } from "@/components/providers/AppProviders";
 import "./globals.css";
 
 const geist = Geist({
@@ -22,7 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geist.variable} h-full`}>
       <body className="min-h-full antialiased">
-        <RoleProvider>{children}</RoleProvider>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );

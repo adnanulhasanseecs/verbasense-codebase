@@ -1,12 +1,10 @@
 ﻿import {
-  clearAuth,
   createInvite,
-  getAuthToken,
   listAdminUsers,
-  login,
   updateAdminUserRole,
   updateAdminUserStatus,
-} from "@/lib/api";
+} from "@/lib/api/admin";
+import { clearAuth, getAuthToken, login } from "@/lib/api/auth";
 
 describe("admin/auth API client", () => {
   beforeEach(() => {

@@ -65,6 +65,71 @@ class JobEventModel(Base):
     )
 
 
+class AudioArtifactModel(Base):
+    __tablename__ = "audio_artifacts"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    job_id: Mapped[str | None] = mapped_column(
+        String(36),
+        ForeignKey("jobs.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    live_session_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    account_id: Mapped[str | None] = mapped_column(
+        String(36),
+        ForeignKey("accounts.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    source_type: Mapped[str] = mapped_column(String(32), default="upload", index=True)
+    storage_uri: Mapped[str] = mapped_column(String(500))
+    sha256: Mapped[str] = mapped_column(String(64), index=True)
+    size_bytes: Mapped[int] = mapped_column(Integer, default=0)
+    mime_type: Mapped[str] = mapped_column(String(120), default="application/octet-stream")
+    original_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    legal_hold: Mapped[bool] = mapped_column(default=False)
+    retention_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class LiveSessionModel(Base):
+    __tablename__ = "live_sessions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    account_id: Mapped[str | None] = mapped_column(
+        String(36),
+        ForeignKey("accounts.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    actor_user_id: Mapped[str | None] = mapped_column(
+        String(36),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    status: Mapped[str] = mapped_column(String(32), default="stopped", index=True)
+    courtroom: Mapped[str] = mapped_column(String(120), default="Courtroom A")
+    speaker: Mapped[str] = mapped_column(String(120), default="Judge")
+    input_device: Mapped[str] = mapped_column(String(255), default="default")
+    sample_rate: Mapped[int] = mapped_column(Integer, default=16000)
+    chunk_duration_ms: Mapped[int] = mapped_column(Integer, default=1000)
+    duration_ms: Mapped[int] = mapped_column(Integer, default=0)
+    timeline_progress: Mapped[int] = mapped_column(Integer, default=0)
+    speaker_activity: Mapped[list[dict[str, object]]] = mapped_column(JSON, default=list)
+    waveform: Mapped[list[int]] = mapped_column(JSON, default=list)
+    transcript_payload: Mapped[list[dict[str, object]]] = mapped_column(JSON, default=list)
+    intelligence_payload: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
 class AccountModel(Base):
     __tablename__ = "accounts"
 

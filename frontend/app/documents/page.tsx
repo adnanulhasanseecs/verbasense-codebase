@@ -1,6 +1,6 @@
 ﻿import { AppShell } from "@/components/AppShell";
-import { DocumentsClient } from "@/components/documents/DocumentsClient";
 import { RoleGuard } from "@/components/rbac/RoleGuard";
+import { DocumentsPageContent } from "@/features/documents/components/DocumentsPageContent";
 
 export default function DocumentsPage() {
   return (
@@ -13,7 +13,7 @@ export default function DocumentsPage() {
           </p>
         }
       >
-        <DocumentsClient />
+        <DocumentsPageContent />
       </RoleGuard>
     </AppShell>
   );

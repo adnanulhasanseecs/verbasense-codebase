@@ -6,13 +6,13 @@ import { AppShell } from "@/components/AppShell";
 import {
   createAdminUser,
   createInvite,
-  getAuthUser,
   listAdminUsers,
   resetAdminUserPassword,
   updateAdminUserRole,
   updateAdminUserStatus,
   type AdminUser,
-} from "@/lib/api";
+} from "@/lib/api/admin";
+import { getAuthUser } from "@/lib/api/auth";
 
 const ROLES = ["admin", "judge", "clerk", "viewer"];
 

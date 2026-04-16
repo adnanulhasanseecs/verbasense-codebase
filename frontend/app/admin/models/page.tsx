@@ -5,12 +5,12 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import {
   getAiConnections,
-  getAuthUser,
   healthCheckAiConnections,
   updateAiConnections,
-  validateDocumentLlmKey,
   type AiConnections,
-} from "@/lib/api";
+} from "@/lib/api/admin";
+import { getAuthUser } from "@/lib/api/auth";
+import { validateDocumentLlmKey } from "@/lib/api/document-processing";
 
 function KeyStatusBadge({
   configured,

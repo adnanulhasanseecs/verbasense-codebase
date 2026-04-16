@@ -1,4 +1,4 @@
-import type { JobStatus } from "@/lib/api";
+import type { JobStatus } from "@/lib/api/types";
 
 const styles: Record<JobStatus, string> = {
   queued: "bg-amber-500/15 text-amber-200 ring-1 ring-amber-400/30",

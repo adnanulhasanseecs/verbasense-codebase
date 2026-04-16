@@ -1,7 +1,9 @@
 ﻿"use client";
 
+import Link from "next/link";
 import { Activity, AlertTriangle, CheckCircle2, Clock3, Gavel, Scale } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
+import { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 import {
   Area,
@@ -18,6 +20,7 @@ import {
   YAxis,
 } from "recharts";
 import { useRole } from "@/components/rbac/RoleContext";
+import { useDashboard } from "@/features/dashboard/hooks/useDashboard";
 
 const kpis = [
   {
@@ -54,55 +57,40 @@ const kpis = [
   },
 ] as const;
 
-const sessionsPerHour = [
-  { hour: "08", sessions: 3 },
-  { hour: "09", sessions: 5 },
-  { hour: "10", sessions: 8 },
-  { hour: "11", sessions: 6 },
-  { hour: "12", sessions: 4 },
-  { hour: "13", sessions: 7 },
-  { hour: "14", sessions: 9 },
-  { hour: "15", sessions: 6 },
-];
-
-const byCourtroom = [
-  { name: "A", value: 24 },
-  { name: "B", value: 18 },
-  { name: "C", value: 15 },
-  { name: "D", value: 11 },
-];
-
-const byDay = [
-  { day: "Mon", value: 14 },
-  { day: "Tue", value: 19 },
-  { day: "Wed", value: 17 },
-  { day: "Thu", value: 22 },
-  { day: "Fri", value: 20 },
-  { day: "Sat", value: 11 },
-  { day: "Sun", value: 9 },
-];
-
-const docTypes = [
-  { name: "PDF", value: 43, color: "#3B82F6" },
-  { name: "Audio", value: 27, color: "#6366F1" },
-  { name: "Evidence", value: 19, color: "#22D3EE" },
-  { name: "Notes", value: 11, color: "#F59E0B" },
-];
-
-const timeline = [
-  { title: "Action pending", detail: "Submit judgment draft", at: "10:15" },
-  { title: "Review needed", detail: "Evidence packet E-24", at: "11:20" },
-  { title: "Judgment required", detail: "CR-2026-119 disposition", at: "13:10" },
-];
-
 export function DashboardLayout() {
   const { role } = useRole();
+  const { data, isLoading, isError, refetch } = useDashboard();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setMounted(true), 0);
     return () => window.clearTimeout(timer);
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-12 gap-6 p-6">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <div key={index} className="col-span-12 h-40 animate-pulse rounded-2xl bg-[#121826]/80 ring-1 ring-white/[0.06] lg:col-span-6" />
+        ))}
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-rose-100">
+        Failed to load dashboard analytics.
+        <button type="button" onClick={() => refetch()} className="ml-3 rounded-lg border border-white/20 px-2 py-1 text-xs hover:bg-white/10">
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return <div className="rounded-2xl border border-white/10 bg-[#121826] p-4 text-sm text-[#9CA3AF]">No dashboard data available.</div>;
+  }
 
   return (
     <div className="flex-1 min-w-0">
@@ -114,31 +102,31 @@ export function DashboardLayout() {
           </h1>
         </section>
 
-        {kpis.map((kpi) => (
+        {data.kpis.map((kpi, index) => (
           <div key={kpi.title} className="col-span-12 min-w-0 md:col-span-6 lg:col-span-3">
-            <KPICardWithTrend mounted={mounted} {...kpi} />
+            <KPICardWithTrend mounted={mounted} icon={kpis[index]?.icon ?? Activity} {...kpi} />
           </div>
         ))}
 
         <div className="col-span-12 min-w-0 lg:col-span-8">
-          <LiveSessionPanel />
+          <LiveSessionPanel liveSession={data.liveSession} />
         </div>
         <div className="col-span-12 min-w-0 lg:col-span-4">
-          <ActivityChart mounted={mounted} />
+          <ActivityChart mounted={mounted} sessionsPerHour={data.sessionsPerHour} />
         </div>
 
         <div className="col-span-12 min-w-0 lg:col-span-8">
-          <SessionsAnalyticsChart mounted={mounted} />
+          <SessionsAnalyticsChart mounted={mounted} byCourtroom={data.byCourtroom} byDay={data.byDay} />
         </div>
         <div className="col-span-12 min-w-0 lg:col-span-4">
-          <IntelligencePanel role={role} />
+          <IntelligencePanel role={role} summary={data.intelligence.summary} decisions={data.intelligence.decisions.map((d) => d.text)} actions={data.intelligence.actions.map((a) => a.text)} />
         </div>
 
         <div className="col-span-12 min-w-0 lg:col-span-6">
-          <DocumentsPieChart mounted={mounted} />
+          <DocumentsPieChart mounted={mounted} docTypes={data.docTypes} />
         </div>
         <div className="col-span-12 min-w-0 lg:col-span-6">
-          <ActionsTimeline />
+          <ActionsTimeline timeline={data.timeline} />
         </div>
       </div>
     </div>
@@ -197,6 +185,7 @@ function KPICardWithTrend({
   value,
   trend,
   up,
+  href,
   icon: Icon,
   data,
   mounted,
@@ -205,6 +194,7 @@ function KPICardWithTrend({
   value: string;
   trend: string;
   up: boolean;
+  href: string;
   icon: ComponentType<{ size?: number; className?: string }>;
   data: readonly number[];
   mounted: boolean;
@@ -212,7 +202,7 @@ function KPICardWithTrend({
   const chartData = data.map((v, i) => ({ x: i, y: v }));
 
   return (
-    <section className={panelSurface}>
+    <Link href={href} className={`${panelSurface} block transition hover:border-white/25 hover:bg-[#162743]`}>
       <div className="flex items-start justify-between">
         <div>
           <p className="text-[11px] uppercase tracking-[0.14em] text-[#9CA3AF]">{title}</p>
@@ -228,7 +218,7 @@ function KPICardWithTrend({
         </span>
         <MiniSparkline data={chartData} color={up ? "#67E8F9" : "#FB7185"} mounted={mounted} />
       </div>
-    </section>
+    </Link>
   );
 }
 
@@ -255,7 +245,21 @@ function MiniSparkline({
   );
 }
 
-function LiveSessionPanel() {
+function LiveSessionPanel({
+  liveSession,
+}: {
+  liveSession: {
+    courtroom: string;
+    speaker: string;
+    durationLabel: string;
+    timelineProgress: number;
+    speakerActivity: Array<{ label: string; value: number }>;
+    waveform: number[];
+  } | null;
+}) {
+  if (!liveSession) {
+    return <section className={`${panelSurface} flex min-h-[340px] w-full items-center justify-center`}>No live session</section>;
+  }
   return (
     <section
       className={`${panelSurface} flex min-h-[340px] w-full flex-col overflow-hidden lg:h-full`}
@@ -268,30 +272,30 @@ function LiveSessionPanel() {
       </div>
       <div className="mt-3 grid gap-4 lg:grid-cols-[1fr_220px]">
         <div>
-          <p className="text-sm text-[#E5E7EB]">Courtroom A · Speaker: Judge Reynolds</p>
+          <p className="text-sm text-[#E5E7EB]">{liveSession.courtroom} · Speaker: {liveSession.speaker}</p>
           <div className="mt-3 flex h-24 items-end gap-1 rounded-xl border border-white/[0.08] bg-[#0B0F19]/78 px-3 py-2">
-            {Array.from({ length: 48 }).map((_, i) => (
+            {liveSession.waveform.map((value, i) => (
               <span
                 key={i}
                 className="w-1 rounded bg-[#60A5FA]"
-                style={{ height: `${25 + ((i * 17) % 65)}%`, opacity: 0.4 + ((i % 5) * 0.12) }}
+                style={{ height: `${value}%`, opacity: 0.4 + ((i % 5) * 0.12) }}
               />
             ))}
           </div>
           <div className="mt-3">
             <p className="mb-1 text-[11px] uppercase tracking-wide text-[#9CA3AF]">Session timeline</p>
             <div className="h-3 rounded-full bg-[#0B0F19]">
-              <div className="h-3 w-3/5 rounded-full bg-gradient-to-r from-[#3B82F6] to-[#6366F1]" />
+              <div className="h-3 rounded-full bg-gradient-to-r from-[#3B82F6] to-[#6366F1]" style={{ width: `${Math.round(liveSession.timelineProgress * 100)}%` }} />
             </div>
-            <p className="mt-1 text-xs text-[#9CA3AF]">Duration: 01:24:17</p>
+            <p className="mt-1 text-xs text-[#9CA3AF]">Duration: {liveSession.durationLabel}</p>
           </div>
         </div>
         <div className="rounded-xl border border-white/[0.08] bg-[#0B0F19]/78 p-3">
           <p className="text-[11px] uppercase tracking-[0.14em] text-[#9CA3AF]">Speaker activity</p>
           <ul className="mt-2 space-y-2 text-xs">
-            <li className="flex items-center justify-between rounded-lg border border-white/[0.08] bg-[#111827] px-2 py-1.5"><span>Judge</span><span className="text-[#22D3EE]">41%</span></li>
-            <li className="flex items-center justify-between rounded-lg border border-white/[0.08] bg-[#111827] px-2 py-1.5"><span>Counsel</span><span className="text-[#22D3EE]">35%</span></li>
-            <li className="flex items-center justify-between rounded-lg border border-white/[0.08] bg-[#111827] px-2 py-1.5"><span>Clerk</span><span className="text-[#22D3EE]">24%</span></li>
+            {liveSession.speakerActivity.map((entry) => (
+              <li key={entry.label} className="flex items-center justify-between rounded-lg border border-white/[0.08] bg-[#111827] px-2 py-1.5"><span>{entry.label}</span><span className="text-[#22D3EE]">{entry.value}%</span></li>
+            ))}
           </ul>
         </div>
       </div>
@@ -300,7 +304,13 @@ function LiveSessionPanel() {
   );
 }
 
-function ActivityChart({ mounted }: { mounted: boolean }) {
+const ActivityChart = memo(function ActivityChart({
+  mounted,
+  sessionsPerHour,
+}: {
+  mounted: boolean;
+  sessionsPerHour: Array<{ hour: string; sessions: number }>;
+}) {
   return (
     <section className={`${panelSurface} flex min-h-[340px] w-full flex-col lg:h-full`}>
       <h3 className="shrink-0 text-sm font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
@@ -319,9 +329,17 @@ function ActivityChart({ mounted }: { mounted: boolean }) {
       <div className="min-h-0 flex-1" aria-hidden />
     </section>
   );
-}
+});
 
-function SessionsAnalyticsChart({ mounted }: { mounted: boolean }) {
+const SessionsAnalyticsChart = memo(function SessionsAnalyticsChart({
+  mounted,
+  byCourtroom,
+  byDay,
+}: {
+  mounted: boolean;
+  byCourtroom: Array<{ name: string; value: number }>;
+  byDay: Array<{ day: string; value: number }>;
+}) {
   return (
     <section className={`${panelSurface} flex min-h-[360px] w-full flex-col lg:h-full`}>
       <h3 className="shrink-0 text-sm font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
@@ -356,12 +374,19 @@ function SessionsAnalyticsChart({ mounted }: { mounted: boolean }) {
       <div className="min-h-0 flex-1" aria-hidden />
     </section>
   );
-}
+});
 
-function IntelligencePanel({ role }: { role: string }) {
-  const decisions = ["Exhibit A admitted", "Continuance approved", "Cross-exam scheduled"];
-  const actions = ["Issue order draft", "Confirm docket update", "Notify chambers"];
-
+function IntelligencePanel({
+  role,
+  summary,
+  decisions,
+  actions,
+}: {
+  role: string;
+  summary: string;
+  decisions: string[];
+  actions: string[];
+}) {
   return (
     <section className={`${panelSurface} flex min-h-[360px] w-full flex-col lg:h-full`}>
       <h3 className="shrink-0 text-sm font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
@@ -369,7 +394,7 @@ function IntelligencePanel({ role }: { role: string }) {
       </h3>
       <div className="mt-3 min-h-0 flex-1 space-y-3 overflow-y-auto">
         <div className="rounded-xl border border-white/[0.08] bg-[#0B0F19]/70 p-3">
-          <p className="text-base text-[#E5E7EB]">Role-aware summary stream for {role} operations.</p>
+          <p className="text-base text-[#E5E7EB]">{summary || `Role-aware summary stream for ${role} operations.`}</p>
         </div>
         <ul className="space-y-2 text-sm text-[#E5E7EB]">
           {decisions.map((d) => (
@@ -390,7 +415,13 @@ function IntelligencePanel({ role }: { role: string }) {
   );
 }
 
-function DocumentsPieChart({ mounted }: { mounted: boolean }) {
+const DocumentsPieChart = memo(function DocumentsPieChart({
+  mounted,
+  docTypes,
+}: {
+  mounted: boolean;
+  docTypes: Array<{ name: string; value: number; color: string }>;
+}) {
   return (
     <section className={`${panelSurface} flex min-h-[340px] w-full flex-col lg:h-full`}>
       <h3 className="shrink-0 text-sm font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
@@ -421,7 +452,7 @@ function DocumentsPieChart({ mounted }: { mounted: boolean }) {
       <div className="min-h-0 flex-1" aria-hidden />
     </section>
   );
-}
+});
 
 function MeasuredChartBlock({
   mounted,
@@ -449,7 +480,11 @@ function MeasuredChartBlock({
   );
 }
 
-function ActionsTimeline() {
+function ActionsTimeline({
+  timeline,
+}: {
+  timeline: Array<{ title: string; detail: string; at: string }>;
+}) {
   return (
     <section className={`${panelSurface} flex min-h-[340px] w-full flex-col lg:h-full`}>
       <h3 className="shrink-0 text-sm font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">

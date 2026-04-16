@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
-import { uploadAudio } from "@/lib/api";
+import { uploadAudio } from "@/lib/api/jobs";
 import { rememberJobId } from "@/lib/jobs-store";
 
 export function UploadPanel() {

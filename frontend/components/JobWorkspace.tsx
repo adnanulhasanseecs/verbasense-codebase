@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { StatusBadge } from "@/components/StatusBadge";
-import type { DomainConfig, Job, OutputSchema } from "@/lib/api";
-import { getDomainConfig, getJob, getResult } from "@/lib/api";
+import { getDomainConfig, getJob, getResult } from "@/lib/api/jobs";
+import type { DomainConfig, Job, OutputSchema } from "@/lib/api/types";
 
 const POLL_MS = 2500;
 

@@ -4,7 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { Eye, Gavel, LogOut, Mars, Scale, Settings, Shield, User, UserCircle2, Venus } from "lucide-react";
 import { useEffect, useRef, useState, type ComponentType } from "react";
-import { clearAuth, getAuthUser, type AuthUser } from "@/lib/api";
+import { clearAuth, getAuthUser } from "@/lib/api/auth";
+import type { AuthUser } from "@/lib/api/types";
 
 const AVATAR_ICONS: Record<string, ComponentType<{ className?: string }>> = {
   shield: Shield,

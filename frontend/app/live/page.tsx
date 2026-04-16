@@ -1,6 +1,6 @@
 ﻿import { AppShell } from "@/components/AppShell";
 import { RoleGuard } from "@/components/rbac/RoleGuard";
-import { LiveSessionClient } from "@/components/live/LiveSessionClient";
+import { LivePageContent } from "@/features/live/components/LivePageContent";
 
 export default function LivePage() {
   return (
@@ -13,7 +13,7 @@ export default function LivePage() {
           </p>
         }
       >
-        <LiveSessionClient />
+        <LivePageContent />
       </RoleGuard>
     </AppShell>
   );

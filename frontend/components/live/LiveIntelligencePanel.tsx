@@ -1,6 +1,13 @@
-﻿import type { TranscriptLine } from "@/lib/mock-data";
+﻿import type { TranscriptLine } from "@/features/sessions/types/sessions.types";
+import type { LiveSession } from "@/features/live/types/live.types";
 
-export function LiveIntelligencePanel({ lines }: { lines: TranscriptLine[] }) {
+export function LiveIntelligencePanel({
+  lines,
+  intelligence,
+}: {
+  lines: TranscriptLine[];
+  intelligence?: LiveSession["intelligence"];
+}) {
   const recent = lines.slice(-3);
   const decisions = lines.filter((l) => /granted|accepted|ordered|admitted/i.test(l.text)).slice(-3);
   const actions = lines
@@ -11,7 +18,9 @@ export function LiveIntelligencePanel({ lines }: { lines: TranscriptLine[] }) {
   return (
     <section className="space-y-4">
       <Card title="Running Summary">
-        {lines.length > 0
+        {intelligence?.summary
+          ? intelligence.summary
+          : lines.length > 0
           ? `Session in progress with ${lines.length} captured statements. Latest focus: ${recent
               .map((r) => r.text)
               .join(" ")}`
@@ -20,8 +29,18 @@ export function LiveIntelligencePanel({ lines }: { lines: TranscriptLine[] }) {
 
       <Card title="Key Decisions">
         <ul className="list-disc space-y-1 pl-5">
-          {(decisions.length ? decisions : recent).map((d) => (
-            <li key={d.id}>{d.text}</li>
+          {(
+            intelligence?.decisions?.length
+              ? intelligence.decisions.map((text, idx) => ({
+                  id: `int-decision-${idx}`,
+                  text,
+                  timestamp: "",
+                }))
+              : decisions.length
+                ? decisions
+                : recent
+          ).map((d, index) => (
+            <li key={`${d.id}-${d.timestamp}-${index}`}>{d.text}</li>
           ))}
         </ul>
       </Card>

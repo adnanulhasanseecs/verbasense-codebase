@@ -1,4 +1,4 @@
-﻿import type { DocumentInsight } from "@/lib/mock-data";
+﻿import type { DocumentInsight } from "@/features/documents/types/documents.types";
 
 export function DocumentInsightPanel({
   insight,

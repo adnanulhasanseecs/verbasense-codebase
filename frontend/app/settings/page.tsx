@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Eye, Gavel, Mars, Scale, Shield, User, Venus, type LucideIcon } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
-import { changeMyPassword, getAuthUser, getMe, updateMyProfile } from "@/lib/api";
+import { changeMyPassword, getAuthUser, getMe, updateMyProfile } from "@/lib/api/auth";
 
 const AVATAR_PRESETS: Array<{ id: string; name: string; icon: LucideIcon }> = [
   { id: "shield", name: "Shield", icon: Shield },

@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { StatusBadge } from "@/components/StatusBadge";
-import { getJob } from "@/lib/api";
+import { getJob } from "@/lib/api/jobs";
+import type { JobStatus } from "@/lib/api/types";
 import { loadJobIds } from "@/lib/jobs-store";
 
 export function DashboardClient() {
@@ -70,7 +71,7 @@ function JobRow({ id }: { id: string }) {
       <span className="truncate font-mono text-xs text-[#9CA3AF]">{id}</span>
       <span>
         {status ? (
-          <StatusBadge status={status as import("@/lib/api").JobStatus} />
+          <StatusBadge status={status as JobStatus} />
         ) : (
           <span className="text-xs text-[#9CA3AF]">...</span>
         )}

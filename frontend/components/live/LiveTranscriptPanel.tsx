@@ -1,8 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useRef } from "react";
-import type { TranscriptLine } from "@/lib/mock-data";
-import { SpeakerTranscript } from "@/components/sessions/SpeakerTranscript";
+import type { TranscriptLine } from "@/features/sessions/types/sessions.types";
 
 export function LiveTranscriptPanel({
   lines,
@@ -11,11 +10,12 @@ export function LiveTranscriptPanel({
   lines: TranscriptLine[];
   listening: boolean;
 }) {
-  const bottomRef = useRef<HTMLDivElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (bottomRef.current && typeof bottomRef.current.scrollIntoView === "function") {
-      bottomRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+    const node = scrollRef.current;
+    if (node) {
+      node.scrollTop = node.scrollHeight;
     }
   }, [lines]);
 
@@ -28,9 +28,22 @@ export function LiveTranscriptPanel({
           {listening ? "listening" : "paused"}
         </span>
       </div>
-      <div className="max-h-[520px] space-y-3 overflow-y-auto pr-2">
-        <SpeakerTranscript lines={lines} />
-        <div ref={bottomRef} />
+      <div
+        ref={scrollRef}
+        className="h-[360px] overflow-y-auto rounded-xl border border-white/10 bg-[#0B0F19]/60 p-3 pr-2"
+      >
+        <div className="space-y-2 text-sm text-[#E5E7EB]">
+          {lines.length === 0 ? (
+            <p className="text-[#9CA3AF]">No transcript lines yet.</p>
+          ) : (
+            lines.map((line, index) => (
+              <p key={`${line.id}-${line.timestamp}-${index}`} className="leading-relaxed">
+                <span className="font-semibold text-[#22D3EE]">{line.speaker}:</span>{" "}
+                <span>{line.text}</span>
+              </p>
+            ))
+          )}
+        </div>
       </div>
     </section>
   );

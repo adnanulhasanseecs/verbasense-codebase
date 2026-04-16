@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import logging
+from datetime import UTC, datetime
 from typing import Annotated, Any, cast
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, Header, UploadFile
+from fastapi import APIRouter, Body, Depends, File, Form, Header, UploadFile
 from fastapi.encoders import jsonable_encoder
 
 from app.api.deps import (
@@ -17,6 +18,8 @@ from app.api.deps import (
 )
 from app.api.exceptions import BadRequestError, PayloadTooLargeError
 from app.config.settings import Settings, get_settings
+from app.db.models import AudioArtifactModel, JobModel, LiveSessionModel
+from app.db.session import session_scope
 from app.schemas.auth import (
     AcceptInviteRequest,
     AiConnectionsHealthCheckResponse,
@@ -44,6 +47,7 @@ from app.schemas.upload import UploadMetadata
 from app.services.auth_service import get_auth_service
 from app.services.document_processing import get_document_processing_service
 from app.services.job_service import JobService, get_job_service, job_to_response
+from app.services.live_session_service import get_live_session_service
 from app.services.observability import snapshot as metrics_snapshot
 
 logger = logging.getLogger(__name__)
@@ -107,6 +111,8 @@ async def upload_audio(
         audio_bytes=audio_bytes,
         force_failure=force_failure,
         idempotency_key=x_idempotency_key,
+        content_type=file.content_type or "application/octet-stream",
+        filename=file.filename,
     )
     return job_to_response(record)
 
@@ -169,6 +175,417 @@ async def ops_metrics(
 ) -> dict[str, Any]:
     require_role(user, allowed={"admin"})
     return metrics_snapshot()
+
+
+def _job_to_session_payload(job: JobModel, live_rows: list[LiveSessionModel]) -> dict[str, Any]:
+    payload = job.output_payload or {}
+    transcript = payload.get("transcript", [])
+    summary = str(payload.get("summary", ""))
+    decisions = payload.get("key_decisions", [])
+    actions = payload.get("actions", [])
+    documents = [
+        {
+            "id": f"DOC-{job.id[:8]}",
+            "name": f"Transcript Artifact {job.id[:8]}.pdf",
+            "summary": "Generated from processed judicial audio",
+            "type": "pdf",
+            "linkedSessionId": job.id,
+            "processingStatus": "completed" if job.status == "completed" else "processing",
+            "entityCount": len(payload.get("entities", [])),
+        }
+    ]
+    live_documents = []
+    for live in live_rows:
+        live_documents.append(
+            {
+                "id": f"LIVE-DOC-{live.id[:8]}",
+                "name": f"Live Audio Artifact {live.id[:8]}.webm",
+                "summary": "Captured live courtroom audio artifact",
+                "type": "audio",
+                "linkedSessionId": live.id,
+                "processingStatus": "completed" if live.status != "live" else "processing",
+                "entityCount": len((live.intelligence_payload or {}).get("entities", [])),
+            }
+        )
+    return {
+        "id": job.id,
+        "name": f"Session {job.id[:8]}",
+        "judge": job.upload_metadata.get("courtroom", "Judge"),
+        "dateLabel": (job.updated_at or job.created_at).strftime("%Y-%m-%d %H:%M"),
+        "status": "processed" if job.status == "completed" else "processing",
+        "transcript": transcript,
+        "intelligence": {
+            "summary": summary,
+            "decisions": [{"id": f"d-{i+1}", "text": str(x)} for i, x in enumerate(decisions)],
+            "actions": [
+                {"id": f"a-{i+1}", "text": str(item.get("text", "")), "owner": item.get("owner")}
+                if isinstance(item, dict)
+                else {"id": f"a-{i+1}", "text": str(item)}
+                for i, item in enumerate(actions)
+            ],
+        },
+        "speakers": [{"id": "sp-1", "name": "Judge", "role": "judge"}],
+        "documents": [*documents, *live_documents],
+    }
+
+
+def _live_to_session_payload(live: LiveSessionModel) -> dict[str, Any]:
+    payload = live.intelligence_payload or {}
+    transcript = live.transcript_payload or []
+    decisions = payload.get("decisions", [])
+    actions = payload.get("actions", [])
+    return {
+        "id": live.id,
+        "name": f"Live Session {live.id[:8]}",
+        "judge": live.courtroom,
+        "dateLabel": (live.completed_at or live.updated_at or live.created_at).strftime(
+            "%Y-%m-%d %H:%M"
+        ),
+        "status": "processed" if live.status == "stopped" else "processing",
+        "transcript": transcript,
+        "intelligence": {
+            "summary": str(payload.get("summary", "No intelligence available yet.")),
+            "decisions": [
+                {"id": f"ld-{i+1}", "text": str(item)}
+                for i, item in enumerate(decisions)
+            ],
+            "actions": [
+                {
+                    "id": f"la-{i+1}",
+                    "text": str(item.get("text", "")),
+                    "owner": item.get("owner"),
+                }
+                if isinstance(item, dict)
+                else {"id": f"la-{i+1}", "text": str(item)}
+                for i, item in enumerate(actions)
+            ],
+        },
+        "speakers": [{"id": "spk-1", "name": "Speaker 1", "role": "judge"}],
+        "documents": [
+            {
+                "id": f"LIVE-AUD-{live.id[:8]}",
+                "name": f"Live Session Audio {live.id[:8]}.webm",
+                "summary": "Stored for audit and traceability.",
+                "type": "audio",
+                "linkedSessionId": live.id,
+                "processingStatus": "completed" if live.status == "stopped" else "processing",
+                "entityCount": len(payload.get("entities", [])),
+            }
+        ],
+    }
+
+
+@router.get("/dashboard")
+async def dashboard_data(
+    user: SessionUserDep,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> dict[str, Any]:
+    require_role(user, allowed={"admin", "judge", "clerk", "viewer"})
+    now = datetime.now(tz=UTC)
+    with session_scope(settings) as session:
+        jobs = (
+            session.query(JobModel)
+            .filter(JobModel.account_id == user.account_id)
+            .order_by(JobModel.created_at.desc())
+            .limit(50)
+            .all()
+        )
+        docs = (
+            session.query(AudioArtifactModel)
+            .filter(AudioArtifactModel.account_id == user.account_id)
+            .order_by(AudioArtifactModel.created_at.desc())
+            .limit(50)
+            .all()
+        )
+        live = (
+            session.query(LiveSessionModel)
+            .filter(LiveSessionModel.account_id == user.account_id)
+            .order_by(LiveSessionModel.updated_at.desc())
+            .first()
+        )
+    sessions_today = sum(1 for j in jobs if (j.created_at.date() == now.date()))
+    processed_count = sum(1 for j in jobs if j.status == "completed")
+    active_count = sum(1 for j in jobs if j.status in {"queued", "processing"})
+    docs_processed = sum(1 for d in docs if d.source_type == "upload")
+    by_hour: dict[str, int] = {}
+    for j in jobs:
+        hour = (j.created_at or now).strftime("%H")
+        by_hour[hour] = by_hour.get(hour, 0) + 1
+    sessions_per_hour = [{"hour": hour, "sessions": count} for hour, count in sorted(by_hour.items())][-8:]
+    if not sessions_per_hour:
+        sessions_per_hour = [{"hour": "00", "sessions": 0}]
+    return {
+        "kpis": [
+            {"title": "Active Sessions", "value": str(active_count), "trend": "+0%", "up": True, "href": "/sessions", "data": [max(0, active_count - 2), max(0, active_count - 1), active_count]},
+            {"title": "Sessions Today", "value": str(sessions_today), "trend": "+0%", "up": True, "href": "/sessions", "data": [max(0, sessions_today - 2), max(0, sessions_today - 1), sessions_today]},
+            {"title": "Documents Processed", "value": str(docs_processed), "trend": "+0%", "up": True, "href": "/documents", "data": [max(0, docs_processed - 2), max(0, docs_processed - 1), docs_processed]},
+            {"title": "Live", "value": "1" if live and live.status == "live" else "0", "trend": "+0", "up": bool(live and live.status == "live"), "href": "/live", "data": [0, 0, 1 if live and live.status == "live" else 0]},
+        ],
+        "sessionsPerHour": sessions_per_hour,
+        "byCourtroom": [
+            {"name": "A", "value": max(1, processed_count)},
+            {"name": "B", "value": max(1, sessions_today)},
+            {"name": "C", "value": max(1, active_count)},
+            {"name": "D", "value": max(1, docs_processed)},
+        ],
+        "byDay": [{"day": d, "value": v} for d, v in [("Mon", max(1, sessions_today)), ("Tue", max(1, processed_count)), ("Wed", max(1, active_count)), ("Thu", max(1, docs_processed)), ("Fri", max(1, sessions_today + active_count))]],
+        "docTypes": [
+            {"name": "Audio", "value": max(1, len(docs)), "color": "#6366F1"},
+            {"name": "Transcripts", "value": max(1, processed_count), "color": "#3B82F6"},
+            {"name": "Evidence", "value": max(1, sessions_today), "color": "#22D3EE"},
+            {"name": "Notes", "value": max(1, active_count), "color": "#F59E0B"},
+        ],
+        "timeline": [
+            {"title": "Latest Processing", "detail": f"{processed_count} sessions completed", "at": now.strftime("%H:%M")},
+            {"title": "Audit Artifacts", "detail": f"{len(docs)} audio artifacts retained", "at": now.strftime("%H:%M")},
+            {"title": "Live Stream", "detail": "active" if live and live.status == "live" else "idle", "at": now.strftime("%H:%M")},
+        ],
+        "liveSession": get_live_session_service(settings).latest(account_id=user.account_id),
+        "intelligence": (
+            {
+                "summary": (live.intelligence_payload or {}).get("summary", "No intelligence yet")
+                if live
+                else "No intelligence yet",
+                "decisions": [{"id": f"live-d-{i+1}", "text": str(x)} for i, x in enumerate((live.intelligence_payload or {}).get("decisions", []))]
+                if live
+                else [],
+                "actions": [{"id": f"live-a-{i+1}", "text": str(x.get("text", "")), "owner": x.get("owner")}
+                for i, x in enumerate((live.intelligence_payload or {}).get("actions", []))
+                if isinstance(x, dict)]
+                if live
+                else [],
+            }
+        ),
+    }
+
+
+@router.get("/sessions")
+async def list_sessions_contract(
+    user: SessionUserDep,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> list[dict[str, Any]]:
+    require_role(user, allowed={"admin", "judge", "clerk", "viewer"})
+    with session_scope(settings) as session:
+        jobs = (
+            session.query(JobModel)
+            .filter(JobModel.account_id == user.account_id)
+            .order_by(JobModel.updated_at.desc())
+            .all()
+        )
+        lives = (
+            session.query(LiveSessionModel)
+            .filter(LiveSessionModel.account_id == user.account_id)
+            .order_by(LiveSessionModel.updated_at.desc())
+            .all()
+        )
+    out = [_job_to_session_payload(job, lives) for job in jobs]
+    out.extend(_live_to_session_payload(live) for live in lives if live.status == "stopped")
+    out.sort(key=lambda item: str(item.get("dateLabel", "")), reverse=True)
+    return out
+
+
+@router.get("/sessions/{session_id}")
+async def get_session_contract(
+    session_id: str,
+    user: SessionUserDep,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> dict[str, Any]:
+    require_role(user, allowed={"admin", "judge", "clerk", "viewer"})
+    with session_scope(settings) as session:
+        job = session.get(JobModel, session_id)
+        lives = (
+            session.query(LiveSessionModel)
+            .filter(LiveSessionModel.account_id == user.account_id)
+            .order_by(LiveSessionModel.updated_at.desc())
+            .all()
+        )
+    if job is not None:
+        return _job_to_session_payload(job, lives)
+    live = next((row for row in lives if row.id == session_id), None)
+    if live is not None:
+        return _live_to_session_payload(live)
+    raise BadRequestError("session_not_found", "Session not found")
+
+
+@router.get("/intelligence/{session_id}")
+async def get_session_intelligence_contract(
+    session_id: str,
+    user: SessionUserDep,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> dict[str, Any] | None:
+    require_role(user, allowed={"admin", "judge", "clerk", "viewer"})
+    with session_scope(settings) as session:
+        job = session.get(JobModel, session_id)
+        live = session.get(LiveSessionModel, session_id)
+    if job is not None and job.output_payload:
+        output = job.output_payload
+    elif live is not None and live.intelligence_payload:
+        output = live.intelligence_payload
+    else:
+        return None
+    return {
+        "summary": output.get("summary", ""),
+        "decisions": [{"id": f"d-{i+1}", "text": str(x)} for i, x in enumerate(output.get("key_decisions", output.get("decisions", [])))],
+        "actions": [
+            {"id": f"a-{i+1}", "text": str(item.get("text", "")), "owner": item.get("owner")}
+            if isinstance(item, dict)
+            else {"id": f"a-{i+1}", "text": str(item)}
+            for i, item in enumerate(output.get("actions", []))
+        ],
+    }
+
+
+@router.get("/documents")
+async def list_documents_contract(
+    user: SessionUserDep,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> list[dict[str, Any]]:
+    require_role(user, allowed={"admin", "judge", "clerk", "viewer"})
+    with session_scope(settings) as session:
+        artifacts = (
+            session.query(AudioArtifactModel)
+            .filter(AudioArtifactModel.account_id == user.account_id)
+            .order_by(AudioArtifactModel.created_at.desc())
+            .all()
+        )
+    items: list[dict[str, Any]] = []
+    for index, artifact in enumerate(artifacts, start=1):
+        items.append(
+            {
+                "id": artifact.id,
+                "name": artifact.original_filename or f"Audio Artifact {index}",
+                "summary": f"SHA256: {artifact.sha256[:16]}... ({artifact.size_bytes} bytes)",
+                "type": "audio" if "audio" in artifact.mime_type else "pdf",
+                "linkedSessionId": artifact.job_id or artifact.live_session_id or "",
+                "processingStatus": "completed",
+                "entityCount": 0,
+            }
+        )
+    return items
+
+
+@router.get("/live")
+async def get_live_contract(
+    user: SessionUserDep,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> dict[str, Any] | None:
+    require_role(user, allowed={"admin", "judge", "clerk", "viewer"})
+    live = get_live_session_service(settings).latest(account_id=user.account_id)
+    if live is None:
+        return None
+    if str(live.get("status")) not in {"live", "paused"}:
+        return None
+    return live
+
+
+@router.post("/live/sessions/start")
+async def start_live_session(
+    user: SessionUserDep,
+    settings: Annotated[Settings, Depends(get_settings)],
+    courtroom: str = Form(default="Courtroom A"),
+    input_device: str = Form(default="default"),
+    sample_rate: int = Form(default=16000),
+    chunk_duration_ms: int = Form(default=1000),
+) -> dict[str, Any]:
+    require_role(user, allowed={"admin", "judge", "clerk"})
+    service = get_live_session_service(settings)
+    return service.start(
+        account_id=user.account_id,
+        actor_user_id=user.user_id,
+        courtroom=courtroom,
+        speaker="Speaker 1",
+        input_device=input_device,
+        sample_rate=sample_rate,
+        chunk_duration_ms=chunk_duration_ms,
+    )
+
+
+@router.post("/live/sessions/{session_id}/chunk")
+async def append_live_chunk(
+    session_id: str,
+    chunk: Annotated[UploadFile, File(...)],
+    user: SessionUserDep,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> dict[str, Any]:
+    require_role(user, allowed={"admin", "judge", "clerk"})
+    service = get_live_session_service(settings)
+    content = await _read_upload_with_limit(chunk, settings.max_upload_bytes)
+    try:
+        return service.append_chunk(
+            session_id=session_id,
+            chunk=content,
+            mime_type=chunk.content_type or "application/octet-stream",
+        )
+    except ValueError as exc:
+        raise BadRequestError("live_session_error", str(exc)) from exc
+
+
+@router.post("/live/sessions/{session_id}/pause")
+async def pause_live_session(
+    session_id: str,
+    user: SessionUserDep,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> dict[str, Any]:
+    require_role(user, allowed={"admin", "judge", "clerk"})
+    try:
+        return get_live_session_service(settings).set_status(session_id=session_id, status="paused")
+    except ValueError as exc:
+        raise BadRequestError("live_session_error", str(exc)) from exc
+
+
+@router.post("/live/sessions/{session_id}/resume")
+async def resume_live_session(
+    session_id: str,
+    user: SessionUserDep,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> dict[str, Any]:
+    require_role(user, allowed={"admin", "judge", "clerk"})
+    try:
+        return get_live_session_service(settings).set_status(session_id=session_id, status="live")
+    except ValueError as exc:
+        raise BadRequestError("live_session_error", str(exc)) from exc
+
+
+@router.post("/live/sessions/{session_id}/stop")
+async def stop_live_session(
+    session_id: str,
+    user: SessionUserDep,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> dict[str, Any]:
+    require_role(user, allowed={"admin", "judge", "clerk"})
+    try:
+        return get_live_session_service(settings).stop(session_id=session_id)
+    except ValueError as exc:
+        raise BadRequestError("live_session_error", str(exc)) from exc
+
+
+@router.get("/live/sessions/{session_id}")
+async def get_live_session_by_id(
+    session_id: str,
+    user: SessionUserDep,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> dict[str, Any]:
+    require_role(user, allowed={"admin", "judge", "clerk", "viewer"})
+    try:
+        return get_live_session_service(settings).get(session_id)
+    except ValueError as exc:
+        raise BadRequestError("live_session_error", str(exc)) from exc
+
+
+@router.post("/live/sessions/{session_id}/speakers/labels")
+async def relabel_live_speakers(
+    session_id: str,
+    speaker_labels: Annotated[dict[str, str], Body(...)],
+    user: SessionUserDep,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> dict[str, Any]:
+    require_role(user, allowed={"admin", "judge", "clerk"})
+    try:
+        return get_live_session_service(settings).relabel_speakers(
+            session_id=session_id, speaker_labels=speaker_labels
+        )
+    except ValueError as exc:
+        raise BadRequestError("live_session_error", str(exc)) from exc
 
 
 @router.post("/documents/process", response_model=DocumentProcessResponse)

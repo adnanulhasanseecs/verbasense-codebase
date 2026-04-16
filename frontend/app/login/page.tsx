@@ -1,8 +1,9 @@
 ﻿"use client";
 
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useState } from "react";
-import { login } from "@/lib/api";
+import { login } from "@/lib/api/auth";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("admin@verbasense.local");
@@ -13,6 +14,19 @@ export default function LoginPage() {
 
   return (
     <main className="mx-auto flex min-h-[70vh] w-full max-w-md flex-col justify-center px-6">
+      <div className="mb-8 flex items-center gap-3">
+        <Image
+          src="/icon.png"
+          alt="VerbaSense logo"
+          width={36}
+          height={36}
+          className="rounded-lg ring-1 ring-white/15"
+        />
+        <div>
+          <p className="text-xs uppercase tracking-[0.22em] text-[#22D3EE]">VerbaSense</p>
+          <p className="text-sm text-[#9CA3AF]">Court Intelligence Platform</p>
+        </div>
+      </div>
       <h1 className="text-2xl font-semibold text-white">Sign in</h1>
       <p className="mt-1 text-sm text-[#9CA3AF]">Use your account email to access VerbaSense.</p>
       <form

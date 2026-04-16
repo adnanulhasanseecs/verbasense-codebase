@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { DocumentInsightPanel } from "@/components/documents/DocumentInsightPanel";
 import { DocumentUploadPanel } from "@/components/documents/DocumentUploadPanel";
-import { getAiConnections, processDocumentWithLlm, type AiConnections } from "@/lib/api";
-import type { DocumentInsight } from "@/lib/mock-data";
+import { getAiConnections, type AiConnections } from "@/lib/api/admin";
+import { processDocumentWithLlm } from "@/lib/api/document-processing";
+import type { DocumentInsight } from "@/features/documents/types/documents.types";
 
 const FIXED_DOCUMENT_PROMPT =
   "Analyze this legal document and return JSON with exactly four sections: " +

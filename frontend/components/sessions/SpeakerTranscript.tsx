@@ -1,4 +1,4 @@
-﻿import type { TranscriptLine } from "@/lib/mock-data";
+﻿import type { TranscriptLine } from "@/features/sessions/types/sessions.types";
 
 export function SpeakerTranscript({
   lines,
@@ -11,10 +11,13 @@ export function SpeakerTranscript({
 }) {
   return (
     <div className={condensed ? "space-y-2" : "space-y-3"}>
-      {lines.map((line) => (
+      {lines.map((line, index) => {
+        const stableKey = `${line.id}-${line.timestamp}-${index}`;
+        const stableId = `${idPrefix}-${line.id}-${index}`;
+        return (
         <article
-          key={line.id}
-          id={`${idPrefix}-${line.id}`}
+          key={stableKey}
+          id={stableId}
           className={
             condensed
               ? "vs-card-glow rounded-xl border border-white/[0.08] bg-[#0B0F19]/60 px-3 py-2"
@@ -29,7 +32,8 @@ export function SpeakerTranscript({
             {line.text}
           </p>
         </article>
-      ))}
+        );
+      })}
     </div>
   );
 }

@@ -3,10 +3,10 @@
 import { useMemo, useState } from "react";
 import { SessionTabs, type SessionTab } from "@/components/sessions/SessionTabs";
 import { SpeakerTranscript } from "@/components/sessions/SpeakerTranscript";
-import type { SessionRecord } from "@/lib/mock-data";
+import type { Session } from "@/features/sessions/types/sessions.types";
 import { exportTranscriptDocx, exportTranscriptPdf } from "@/lib/transcript-export";
 
-export function SessionViewer({ session }: { session: SessionRecord }) {
+export function SessionViewer({ session }: { session: Session }) {
   const [tab, setTab] = useState<SessionTab>("transcript");
   const [condensed, setCondensed] = useState(true);
 
@@ -14,8 +14,8 @@ export function SessionViewer({ session }: { session: SessionRecord }) {
   const intelligenceForExport = useMemo(
     () => ({
       summary: session.intelligence.summary,
-      key_decisions: session.intelligence.decisions,
-      actions: session.intelligence.actions.map((text) => ({ text })),
+      key_decisions: session.intelligence.decisions.map((decision) => decision.text),
+      actions: session.intelligence.actions.map((action) => ({ text: action.text })),
     }),
     [session.intelligence],
   );
@@ -70,13 +70,13 @@ export function SessionViewer({ session }: { session: SessionRecord }) {
                 </h3>
                 <p className="mt-1 text-[11px] text-[#6B7280]">Jump by timestamp and speaker</p>
                 <div className="mt-3 space-y-2">
-                  {lines.map((line) => (
+                  {lines.map((line, index) => (
                     <button
-                      key={line.id}
+                      key={`${line.id}-${line.timestamp}-${index}`}
                       type="button"
                       onClick={() => {
                         document
-                          .getElementById(`session-line-${line.id}`)
+                          .getElementById(`session-line-${line.id}-${index}`)
                           ?.scrollIntoView({ behavior: "smooth", block: "center" });
                       }}
                       className="w-full rounded-lg border border-white/[0.08] bg-[#121826] px-2.5 py-2 text-left text-xs text-[#E5E7EB] hover:border-[#3B82F6]/50 hover:bg-[#1A2438]"
@@ -98,14 +98,14 @@ export function SessionViewer({ session }: { session: SessionRecord }) {
           <Card title="Decisions">
             <ul className="list-disc space-y-1 pl-5">
               {session.intelligence.decisions.map((d) => (
-                <li key={d}>{d}</li>
+                <li key={d.id}>{d.text}</li>
               ))}
             </ul>
           </Card>
           <Card title="Actions">
             <ul className="list-disc space-y-1 pl-5">
               {session.intelligence.actions.map((a) => (
-                <li key={a}>{a}</li>
+                <li key={a.id}>{a.text}</li>
               ))}
             </ul>
           </Card>

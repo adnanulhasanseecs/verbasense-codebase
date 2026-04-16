@@ -188,6 +188,11 @@ class Settings(BaseSettings):
         alias="EVAL_MODE_ENABLED",
         description="Enable evaluation endpoints and golden-set tooling in non-prod.",
     )
+    audio_artifacts_dir: str = Field(
+        default="artifacts/audio",
+        alias="AUDIO_ARTIFACTS_DIR",
+        description="Directory for persisted raw audio artifacts (upload/live).",
+    )
 
     @property
     def cors_origin_list(self) -> list[str]:

@@ -1,7 +1,7 @@
 ﻿import { Document, Packer, Paragraph, TextRun } from "docx";
 import { jsPDF } from "jspdf";
-import type { TranscriptLine } from "@/lib/mock-data";
-import type { OutputSchema } from "@/lib/api";
+import type { TranscriptLine } from "@/features/sessions/types/sessions.types";
+import type { OutputSchema } from "@/lib/api/types";
 
 function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
